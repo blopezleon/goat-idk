@@ -60,14 +60,52 @@
             color: #7f8c8d;
             margin-top: 0.5rem;
         }
+
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .play-button {
+            display: inline-block;
+            padding: 1rem 2rem;
+            background-color: #27ae60;  /* Green color for play button */
+            color: white;
+            border: none;
+            border-radius: 30px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .play-button:hover {
+            background-color: #219a52;
+        }
+
+        .play-button:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+        }
+
+        .audio-player {
+            margin-top: 1rem;
+            width: 100%;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="analysis-section">
             <h2>Speech Analysis</h2>
-            <button id="recordButton" class="record-button">Start Recording</button>
+            <div class="button-group">
+                <button id="recordButton" class="record-button">Start Recording</button>
+                <button id="playButton" class="play-button" disabled>Play Recording</button>
+            </div>
             <p class="status" id="status">Click to start recording</p>
+            
+            <!-- Add audio element for playback -->
+            <audio id="audioPlayback" class="audio-player" controls style="display: none;"></audio>
             
             <h3>Your Speech</h3>
             <div id="transcription">Transcription will appear here...</div>
@@ -80,10 +118,13 @@
     <script>
         let mediaRecorder;
         let audioChunks = [];
+        let audioBlob = null;
         const recordButton = document.getElementById('recordButton');
+        const playButton = document.getElementById('playButton');
         const status = document.getElementById('status');
         const transcriptionDiv = document.getElementById('transcription');
         const feedbackDiv = document.getElementById('feedback');
+        const audioPlayback = document.getElementById('audioPlayback');
 
         recordButton.addEventListener('click', async () => {
             if (mediaRecorder && mediaRecorder.state === 'recording') {
@@ -92,16 +133,28 @@
                 recordButton.classList.remove('recording');
                 status.textContent = 'Processing...';
             } else {
+                // Reset audio
+                audioChunks = [];
+                audioBlob = null;
+                audioPlayback.style.display = 'none';
+                playButton.disabled = true;
+
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 mediaRecorder = new MediaRecorder(stream);
-                audioChunks = [];
 
                 mediaRecorder.ondataavailable = (event) => {
                     audioChunks.push(event.data);
                 };
 
                 mediaRecorder.onstop = async () => {
-                    const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                    audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                    
+                    // Enable playback
+                    const audioUrl = URL.createObjectURL(audioBlob);
+                    audioPlayback.src = audioUrl;
+                    audioPlayback.style.display = 'block';
+                    playButton.disabled = false;
+
                     await analyzeAudio(audioBlob);
                 };
 
@@ -110,6 +163,31 @@
                 recordButton.classList.add('recording');
                 status.textContent = 'Recording...';
             }
+        });
+
+        playButton.addEventListener('click', () => {
+            if (audioPlayback.paused) {
+                audioPlayback.play();
+                playButton.textContent = 'Pause';
+            } else {
+                audioPlayback.pause();
+                playButton.textContent = 'Play Recording';
+            }
+        });
+
+        // Update play button text when audio ends
+        audioPlayback.addEventListener('ended', () => {
+            playButton.textContent = 'Play Recording';
+        });
+
+        // Update play button text when audio is paused
+        audioPlayback.addEventListener('pause', () => {
+            playButton.textContent = 'Play Recording';
+        });
+
+        // Update play button text when audio is playing
+        audioPlayback.addEventListener('play', () => {
+            playButton.textContent = 'Pause';
         });
 
         async function analyzeAudio(audioBlob) {
