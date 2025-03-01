@@ -130,6 +130,7 @@
    <script>
        let mediaRecorder;
        let audioChunks = [];
+       let audioUrl;
       
        const recordButton = document.getElementById('recordButton');
        const playButton = document.getElementById('playButton');
@@ -141,44 +142,76 @@
 
        recordButton.addEventListener('click', async () => {
            if (mediaRecorder && mediaRecorder.state === 'recording') {
-               // Stop recording
                mediaRecorder.stop();
                recordButton.textContent = 'Start Recording';
                recordButton.classList.remove('recording');
                status.textContent = 'Processing...';
            } else {
-               // Start recording
                try {
-                   const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                   // Request high-quality audio
+                   const stream = await navigator.mediaDevices.getUserMedia({ 
+                       audio: {
+                           channelCount: 1,
+                           sampleRate: 16000,
+                           echoCancellation: true,
+                           noiseSuppression: true,
+                           autoGainControl: true
+                       }
+                   });
+                   
+                   // Clear previous recording
                    audioChunks = [];
                    
-                   // Use a supported MIME type
-                   const mimeType = 'audio/webm';
+                   // Create MediaRecorder with specific settings
                    mediaRecorder = new MediaRecorder(stream, {
-                       mimeType: mimeType,
-                       audioBitsPerSecond: 16000
+                       mimeType: 'audio/webm;codecs=opus',
+                       audioBitsPerSecond: 128000 // Increase bit rate
                    });
                    
                    mediaRecorder.ondataavailable = (event) => {
                        if (event.data.size > 0) {
                            audioChunks.push(event.data);
+                           console.log('Audio chunk received:', event.data.size, 'bytes');
                        }
                    };
 
-                   mediaRecorder.onstop = async () => {
-                       const audioBlob = new Blob(audioChunks, { type: mimeType });
+                   mediaRecorder.onstop = () => {
+                       // Stop the stream tracks
+                       stream.getTracks().forEach(track => track.stop());
                        
-                       // Show audio playback
-                       const audioUrl = URL.createObjectURL(audioBlob);
+                       console.log('Recording stopped');
+                       console.log('Total chunks:', audioChunks.length);
+
+                       // Create audio blob
+                       const audioBlob = new Blob(audioChunks, { 
+                           type: 'audio/webm;codecs=opus'
+                       });
+                       console.log('Blob created, size:', audioBlob.size);
+
+                       // Clean up old audio URL
+                       if (audioUrl) {
+                           URL.revokeObjectURL(audioUrl);
+                       }
+
+                       // Set up audio playback
+                       audioUrl = URL.createObjectURL(audioBlob);
                        audioPlayback.src = audioUrl;
                        audioPlayback.style.display = 'block';
                        playButton.disabled = false;
 
-                       // Send to server
+                       // Test playback
+                       audioPlayback.load();
+                       audioPlayback.onloadeddata = () => {
+                           console.log('Audio loaded, duration:', audioPlayback.duration);
+                           status.textContent = 'Recording ready for playback';
+                       };
+
+                       // Send for analysis
                        const reader = new FileReader();
                        reader.onloadend = async () => {
                            try {
-                               const response = await fetch('http://localhost:3000/api/analyze-speech', {
+                               status.textContent = 'Sending to server...';
+                               const response = await fetch('http://127.0.0.1:3000/api/analyze-speech', {
                                    method: 'POST',
                                    headers: { 'Content-Type': 'application/json' },
                                    body: JSON.stringify({
@@ -187,62 +220,52 @@
                                    })
                                });
 
-                               if (!response.ok) {
-                                   throw new Error(`Server error: ${response.status}`);
-                               }
-
                                const results = await response.json();
+                               console.log('Analysis results:', results);
+                               
                                transcriptionDiv.textContent = results.transcription || 'No transcription';
                                feedbackDiv.textContent = results.feedback || 'No feedback';
                                status.textContent = 'Analysis complete';
-
                            } catch (error) {
-                               console.error('Error:', error);
-                               status.textContent = `Error: ${error.message}`;
+                               console.error('Server error:', error);
+                               status.textContent = 'Server error: ' + error.message;
                            }
                        };
 
                        reader.readAsDataURL(audioBlob);
                    };
 
-                   mediaRecorder.start();
+                   // Start recording in smaller chunks
+                   mediaRecorder.start(100);
                    recordButton.textContent = 'Stop Recording';
                    recordButton.classList.add('recording');
-                   status.textContent = 'Recording...';
+                   status.textContent = 'Recording... (speak clearly)';
 
                } catch (error) {
-                   console.error('Error:', error);
-                   status.textContent = `Error: ${error.message}`;
+                   console.error('Recording error:', error);
+                   status.textContent = 'Error: ' + error.message;
                }
            }
        });
 
+       // Make sure audio controls work
+       audioPlayback.onplay = () => {
+           playButton.textContent = 'Pause';
+           console.log('Audio playing');
+       };
 
-       // Audio playback controls
-       playButton.addEventListener('click', () => {
+       audioPlayback.onpause = () => {
+           playButton.textContent = 'Play Recording';
+           console.log('Audio paused');
+       };
+
+       playButton.onclick = () => {
            if (audioPlayback.paused) {
                audioPlayback.play();
-               playButton.textContent = 'Pause';
            } else {
                audioPlayback.pause();
-               playButton.textContent = 'Play Recording';
            }
-       });
-
-
-       audioPlayback.addEventListener('ended', () => {
-           playButton.textContent = 'Play Recording';
-       });
-
-
-       audioPlayback.addEventListener('pause', () => {
-           playButton.textContent = 'Play Recording';
-       });
-
-
-       audioPlayback.addEventListener('play', () => {
-           playButton.textContent = 'Pause';
-       });
+       };
    </script>
 
    <script>
