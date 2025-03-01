@@ -137,55 +137,35 @@
                 recordButton.classList.remove('recording');
                 status.textContent = 'Processing...';
             } else {
-                try {
-                    audioChunks = [];
-                    audioBlob = null;
-                    audioPlayback.style.display = 'none';
-                    playButton.disabled = true;
+                // Reset audio
+                audioChunks = [];
+                audioBlob = null;
+                audioPlayback.style.display = 'none';
+                playButton.disabled = true;
 
-                    const stream = await navigator.mediaDevices.getUserMedia({ 
-                        audio: {
-                            channelCount: 1,
-                            sampleRate: 16000,
-                            sampleSize: 16,
-                            volume: 1
-                        }
-                    });
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
 
-                    mediaRecorder = new MediaRecorder(stream, {
-                        mimeType: 'audio/webm;codecs=opus',
-                        audioBitsPerSecond: 16000
-                    });
+                mediaRecorder.ondataavailable = (event) => {
+                    audioChunks.push(event.data);
+                };
 
-                    mediaRecorder.ondataavailable = (event) => {
-                        if (event.data.size > 0) {
-                            audioChunks.push(event.data);
-                        }
-                    };
+                mediaRecorder.onstop = async () => {
+                    audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                    
+                    // Enable playback
+                    const audioUrl = URL.createObjectURL(audioBlob);
+                    audioPlayback.src = audioUrl;
+                    audioPlayback.style.display = 'block';
+                    playButton.disabled = false;
 
-                    mediaRecorder.onstop = async () => {
-                        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-                        
-                        // Convert to WAV format
-                        const audioUrl = URL.createObjectURL(audioBlob);
-                        audioPlayback.src = audioUrl;
-                        audioPlayback.style.display = 'block';
-                        playButton.disabled = false;
+                    await analyzeAudio(audioBlob);
+                };
 
-                        // Stop all tracks
-                        stream.getTracks().forEach(track => track.stop());
-
-                        await analyzeAudio(audioBlob);
-                    };
-
-                    mediaRecorder.start();
-                    recordButton.textContent = 'Stop Recording';
-                    recordButton.classList.add('recording');
-                    status.textContent = 'Recording...';
-                } catch (error) {
-                    console.error('Error accessing microphone:', error);
-                    status.textContent = 'Error accessing microphone';
-                }
+                mediaRecorder.start();
+                recordButton.textContent = 'Stop Recording';
+                recordButton.classList.add('recording');
+                status.textContent = 'Recording...';
             }
         });
 
@@ -216,23 +196,43 @@
 
         async function analyzeAudio(audioBlob) {
             try {
-                // Convert audio blob to base64
+                status.textContent = 'Sending audio for analysis...';
+                
+                // Use relative paths instead of absolute URLs
+                try {
+                    const testResponse = await fetch('/test', {
+                        mode: 'cors'
+                    });
+                    if (!testResponse.ok) {
+                        throw new Error('Server is not responding');
+                    }
+                } catch (error) {
+                    throw new Error('Cannot connect to server. Please try again.');
+                }
+
                 const reader = new FileReader();
                 
                 reader.onloadend = async () => {
-                    const base64Audio = reader.result;
-                    
-                    // Send to server for analysis
-                    const response = await fetch('http://localhost:3000/api/analyze-speech', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            audio: base64Audio,
-                            referenceText: "This is a test." // You can make this dynamic based on what you want the user to say
-                        })
-                    });
+                    try {
+                        const base64Audio = reader.result;
+                        console.log('Sending audio data to server...');
+                        
+                        const response = await fetch('/api/analyze-speech', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            mode: 'cors',
+                            body: JSON.stringify({
+                                audio: base64Audio,
+                                referenceText: "This is a test."
+                            })
+                        });
+
+                        if (!response.ok) {
+                            const errorText = await response.text();
+                            throw new Error(`Server error (${response.status}): ${errorText}`);
+                        }
 
                         const results = await response.json();
                         console.log('Received results:', results);
@@ -241,26 +241,54 @@
                             throw new Error(results.error);
                         }
 
-                    // Display transcription
-                    transcriptionDiv.textContent = results.transcription;
+                        // Display transcription
+                        transcriptionDiv.textContent = results.transcription || 'No transcription available';
 
-                    // Generate and display feedback
-                    let feedback = `Overall Pronunciation Score: ${results.scores.pronunciation}\n\n`;
-                    feedback += `Accuracy: ${results.scores.accuracy}%\n`;
-                    feedback += `Fluency: ${results.scores.fluency}%\n`;
-                    feedback += `Completeness: ${results.scores.completeness}%\n\n`;
-                    
-                    feedback += "Word-by-word analysis:\n";
-                    results.words.forEach(word => {
-                        feedback += `${word.Word}: ${word.PronunciationAssessment.AccuracyScore}% accuracy\n`;
-                    });
+                        // Generate and display feedback
+                        let feedback = `Overall Assessment:\n`;
+                        feedback += `------------------------\n`;
+                        feedback += `Pronunciation Score: ${results.scores.pronunciation}%\n`;
+                        feedback += `Accuracy Score: ${results.scores.accuracy}%\n`;
+                        feedback += `Fluency Score: ${results.scores.fluency}%\n`;
+                        feedback += `Completeness Score: ${results.scores.completeness}%\n`;
+                        
+                        if (results.words && results.words.length > 0) {
+                            feedback += `\nWord-by-word Analysis:\n`;
+                            feedback += `------------------------\n`;
+                            results.words.forEach(word => {
+                                feedback += `Word: "${word.Word}"\n`;
+                                feedback += `  - Accuracy: ${word.PronunciationAssessment?.AccuracyScore}%\n`;
+                                feedback += `  - Error Type: ${word.PronunciationAssessment?.ErrorType}\n`;
+                                if (word.PronunciationAssessment?.ErrorType !== 'None') {
+                                    feedback += `  - Suggestion: Practice this word more carefully\n`;
+                                }
+                                feedback += `\n`;
+                            });
+                        }
 
-                    feedbackDiv.innerHTML = feedback.replace(/\n/g, '<br>');
-                    status.textContent = 'Analysis complete';
+                        feedbackDiv.innerHTML = feedback.replace(/\n/g, '<br>');
+                        
+                        // Display raw data
+                        document.getElementById('rawData').textContent = 
+                            JSON.stringify(results, null, 2);
+
+                        status.textContent = 'Analysis complete';
+                    } catch (error) {
+                        console.error('Error during analysis:', error);
+                        status.textContent = `Error: ${error.message}`;
+                        feedbackDiv.innerHTML = `Error analyzing speech: ${error.message}`;
+                    }
                 };
+
+                reader.onerror = (error) => {
+                    console.error('Error reading audio file:', error);
+                    status.textContent = 'Error reading audio file';
+                };
+
+                reader.readAsDataURL(audioBlob);
             } catch (error) {
-                status.textContent = 'Error analyzing speech';
-                console.error(error);
+                console.error('Error in analyzeAudio:', error);
+                status.textContent = `Error: ${error.message}`;
             }
         }
     </script>
