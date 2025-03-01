@@ -1,408 +1,251 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Speech Analysis - AI Speech Therapist</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/microsoft-cognitiveservices-speech-sdk@latest/distrib/browser/microsoft.cognitiveservices.speech.sdk.bundle-min.js"></script>
-    <script type="module">
-        import config from './js/config.js';
-        
-        // Initialize Speech SDK with config values
-        let speechConfig;
-        try {
-            speechConfig = SpeechSDK.SpeechConfig.fromSubscription(
-                config.AZURE_SPEECH_KEY,
-                config.AZURE_SPEECH_REGION
-            );
-            speechConfig.speechRecognitionLanguage = "en-US";
-            console.log('Speech SDK initialized successfully');
-        } catch (error) {
-            console.error('Error initializing Speech SDK:', error);
-            document.getElementById('status').textContent = 'Error: Could not initialize Speech SDK';
-        }
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>Speech Analysis - AI Speech Therapist</title>
+   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+   <style>
+       body {
+           font-family: 'Poppins', sans-serif;
+           margin: 0;
+           padding: 0;
+           background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+           min-height: 100vh;
+       }
 
-        // Rest of your JavaScript code...
-        // Make sure to use config.AZURE_SPEECH_KEY and config.AZURE_SPEECH_REGION instead of hardcoded values
-    </script>
-    <style>
-        body {
-            font-family: 'Poppins', sans-serif;
-            margin: 0;
-            padding: 0;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            min-height: 100vh;
-        }
 
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 2rem;
-        }
+       .container {
+           max-width: 800px;
+           margin: 0 auto;
+           padding: 2rem;
+       }
 
-        .analysis-section {
-            background: white;
-            padding: 2rem;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            margin-bottom: 2rem;
-        }
 
-        .record-button {
-            display: inline-block;
-            padding: 1rem 2rem;
-            background-color: #3498db;
-            color: white;
-            border: none;
-            border-radius: 30px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
+       .analysis-section {
+           background: white;
+           padding: 2rem;
+           border-radius: 10px;
+           box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+           margin-bottom: 2rem;
+       }
 
-        .record-button:hover {
-            background-color: #2980b9;
-        }
 
-        .record-button.recording {
-            background-color: #e74c3c;
-        }
+       .record-button {
+           display: inline-block;
+           padding: 1rem 2rem;
+           background-color: #3498db;
+           color: white;
+           border: none;
+           border-radius: 30px;
+           font-weight: 500;
+           cursor: pointer;
+           transition: all 0.3s ease;
+       }
 
-        #transcription, #feedback {
-            margin-top: 1rem;
-            padding: 1rem;
-            background: #f8f9fa;
-            border-radius: 5px;
-            min-height: 100px;
-        }
 
-        .status {
-            color: #7f8c8d;
-            margin-top: 0.5rem;
-        }
+       .record-button:hover {
+           background-color: #2980b9;
+       }
 
-        .button-group {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 1rem;
-        }
 
-        .play-button {
-            display: inline-block;
-            padding: 1rem 2rem;
-            background-color: #27ae60;  /* Green color for play button */
-            color: white;
-            border: none;
-            border-radius: 30px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
+       .record-button.recording {
+           background-color: #e74c3c;
+       }
 
-        .play-button:hover {
-            background-color: #219a52;
-        }
 
-        .play-button:disabled {
-            background-color: #bdc3c7;
-            cursor: not-allowed;
-        }
+       #transcription, #feedback {
+           margin-top: 1rem;
+           padding: 1rem;
+           background: #f8f9fa;
+           border-radius: 5px;
+           min-height: 100px;
+       }
 
-        .audio-player {
-            margin-top: 1rem;
-            width: 100%;
-        }
-    </style>
+
+       .status {
+           color: #7f8c8d;
+           margin-top: 0.5rem;
+       }
+
+
+       .button-group {
+           display: flex;
+           gap: 1rem;
+           margin-bottom: 1rem;
+       }
+
+
+       .play-button {
+           display: inline-block;
+           padding: 1rem 2rem;
+           background-color: #27ae60;
+           color: white;
+           border: none;
+           border-radius: 30px;
+           font-weight: 500;
+           cursor: pointer;
+           transition: all 0.3s ease;
+       }
+
+
+       .play-button:hover {
+           background-color: #219a52;
+       }
+
+
+       .play-button:disabled {
+           background-color: #bdc3c7;
+           cursor: not-allowed;
+       }
+
+
+       .audio-player {
+           margin-top: 1rem;
+           width: 100%;
+       }
+   </style>
 </head>
 <body>
-    <div class="container">
-        <div class="analysis-section">
-            <h2>Speech Analysis</h2>
-            <div class="button-group">
-                <button id="recordButton" class="record-button">Start Recording</button>
-                <button id="playButton" class="play-button" disabled>Play Recording</button>
-        </div>
-            <p class="status" id="status">Click to start recording</p>
-            
-            <audio id="audioPlayback" class="audio-player" controls style="display: none;"></audio>
-            
-            <h3>Your Speech</h3>
-            <div id="transcription">Transcription will appear here...</div>
-            
-            <h3>AI Feedback</h3>
-            <div id="feedback">Feedback will appear here...</div>
+   <div class="container">
+       <div class="analysis-section">
+           <h2>Speech Analysis</h2>
+           <div class="button-group">
+               <button id="recordButton" class="record-button">Start Recording</button>
+               <button id="playButton" class="play-button" disabled>Play Recording</button>
+           </div>
+           <p class="status" id="status">Click to start recording</p>
+          
+           <audio id="audioPlayback" class="audio-player" controls style="display: none;"></audio>
+          
+           <h3>Your Speech</h3>
+           <div id="transcription">Transcription will appear here...</div>
+          
+           <h3>AI Feedback</h3>
+           <div id="feedback">Feedback will appear here...</div>
+       </div>
+   </div>
 
-            <h3>Raw Analysis Data</h3>
-            <pre id="rawData" style="background: #f8f9fa; padding: 1rem; border-radius: 5px; overflow-x: auto;">
-                Raw analysis data will appear here...
-            </pre>
-        </div>
-    </div>
 
-    <script>
-        let mediaRecorder;
-        let audioChunks = [];
-        let audioBlob = null;
-        const recordButton = document.getElementById('recordButton');
-        const playButton = document.getElementById('playButton');
-        const status = document.getElementById('status');
-        const transcriptionDiv = document.getElementById('transcription');
-        const feedbackDiv = document.getElementById('feedback');
-        const audioPlayback = document.getElementById('audioPlayback');
+   <script>
+       let mediaRecorder;
+       let audioChunks = [];
+      
+       const recordButton = document.getElementById('recordButton');
+       const playButton = document.getElementById('playButton');
+       const status = document.getElementById('status');
+       const audioPlayback = document.getElementById('audioPlayback');
+       const transcriptionDiv = document.getElementById('transcription');
+       const feedbackDiv = document.getElementById('feedback');
 
-        // Check if browser supports required features
-        function checkBrowserSupport() {
-            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                alert('Your browser does not support audio recording. Please use a modern browser like Chrome or Firefox.');
-                return false;
-            }
-            return true;
-        }
 
-        // Request microphone access
-        async function requestMicrophoneAccess() {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({
-                    audio: {
-                        channelCount: 1,
-                        sampleRate: 16000,
-                        echoCancellation: true,
-                        noiseSuppression: true
-                    }
-                });
-                console.log('Microphone access granted');
-                return stream;
-            } catch (error) {
-                console.error('Error accessing microphone:', error);
-                status.textContent = `Error: ${error.message}. Please ensure microphone access is allowed.`;
-                return null;
-            }
-        }
+       recordButton.addEventListener('click', async () => {
+           if (mediaRecorder && mediaRecorder.state === 'recording') {
+               // Stop recording
+               mediaRecorder.stop();
+               recordButton.textContent = 'Start Recording';
+               recordButton.classList.remove('recording');
+               status.textContent = 'Processing...';
+           } else {
+               // Start recording
+               try {
+                   const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                   audioChunks = [];
+                  
+                   mediaRecorder = new MediaRecorder(stream);
+                  
+                   mediaRecorder.ondataavailable = (event) => {
+                       if (event.data.size > 0) {
+                           audioChunks.push(event.data);
+                       }
+                   };
 
-        // Initialize recording
-        async function startRecording() {
-            try {
-                const stream = await requestMicrophoneAccess();
-                if (!stream) return;
 
-                // Reset audio state
-                audioChunks = [];
-                audioBlob = null;
-                audioPlayback.style.display = 'none';
-                playButton.disabled = true;
+                   mediaRecorder.onstop = async () => {
+                       const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                      
+                       // Show audio playback
+                       const audioUrl = URL.createObjectURL(audioBlob);
+                       audioPlayback.src = audioUrl;
+                       audioPlayback.style.display = 'block';
+                       playButton.disabled = false;
 
-                // Create MediaRecorder with specific MIME type
-                const options = {
-                    mimeType: 'audio/webm;codecs=opus'
-                };
 
-                mediaRecorder = new MediaRecorder(stream, options);
-                console.log('MediaRecorder created:', mediaRecorder.state);
+                       // Send to server
+                       const reader = new FileReader();
+                       reader.onloadend = async () => {
+                           try {
+                               const response = await fetch('http://localhost:3000/api/analyze-speech', {
+                                   method: 'POST',
+                                   headers: { 'Content-Type': 'application/json' },
+                                   body: JSON.stringify({
+                                       audio: reader.result,
+                                       referenceText: "This is a test."
+                                   })
+                               });
 
-                mediaRecorder.ondataavailable = (event) => {
-                    if (event.data.size > 0) {
-                        audioChunks.push(event.data);
-                        console.log('Audio chunk received:', event.data.size, 'bytes');
-                    }
-                };
 
-                mediaRecorder.onstop = async () => {
-                    console.log('Recording stopped');
-                    // Stop all tracks
-                    stream.getTracks().forEach(track => track.stop());
+                               if (!response.ok) {
+                                   throw new Error(`Server error: ${response.status}`);
+                               }
 
-                    // Create audio blob
-                    audioBlob = new Blob(audioChunks, { type: 'audio/webm;codecs=opus' });
-                    console.log('Audio blob created:', audioBlob.size, 'bytes');
 
-                    // Set up audio playback
-                    const audioUrl = URL.createObjectURL(audioBlob);
-                    audioPlayback.src = audioUrl;
-                    audioPlayback.style.display = 'block';
-                    playButton.disabled = false;
+                               const results = await response.json();
+                               transcriptionDiv.textContent = results.transcription || 'No transcription';
+                               feedbackDiv.textContent = results.feedback || 'No feedback';
+                               status.textContent = 'Analysis complete';
 
-                    // Process the audio
-                    await processAudioWithAzure(audioBlob);
-                };
 
-                mediaRecorder.onerror = (event) => {
-                    console.error('MediaRecorder error:', event.error);
-                    status.textContent = `Recording error: ${event.error.message}`;
-                };
+                           } catch (error) {
+                               console.error('Error:', error);
+                               status.textContent = `Error: ${error.message}`;
+                           }
+                       };
 
-                // Start recording
-                mediaRecorder.start(100); // Collect data every 100ms
-                console.log('Recording started');
-                recordButton.textContent = 'Stop Recording';
-                recordButton.classList.add('recording');
-                status.textContent = 'Recording...';
 
-            } catch (error) {
-                console.error('Error in startRecording:', error);
-                status.textContent = `Error: ${error.message}`;
-                recordButton.textContent = 'Start Recording';
-                recordButton.classList.remove('recording');
-            }
-        }
+                       reader.readAsDataURL(audioBlob);
+                   };
 
-        // Handle record button click
-        recordButton.addEventListener('click', async () => {
-            if (!checkBrowserSupport()) return;
 
-            if (mediaRecorder && mediaRecorder.state === 'recording') {
-                console.log('Stopping recording...');
-                mediaRecorder.stop();
-                recordButton.textContent = 'Start Recording';
-                recordButton.classList.remove('recording');
-                status.textContent = 'Processing...';
-            } else {
-                console.log('Starting recording...');
-                await startRecording();
-            }
-        });
+                   mediaRecorder.start();
+                   recordButton.textContent = 'Stop Recording';
+                   recordButton.classList.add('recording');
+                   status.textContent = 'Recording...';
 
-        async function processAudioWithAzure(audioBlob) {
-            try {
-                status.textContent = 'Analyzing speech...';
 
-                // Convert audio blob to format suitable for Azure
-                const arrayBuffer = await audioBlob.arrayBuffer();
-                const audioConfig = SpeechSDK.AudioConfig.fromWavFileInput(arrayBuffer);
+               } catch (error) {
+                   console.error('Error:', error);
+                   status.textContent = `Error: ${error.message}`;
+               }
+           }
+       });
 
-                // Create pronunciation assessment config
-                const pronunciationAssessmentConfig = new SpeechSDK.PronunciationAssessmentConfig(
-                    "This is a test.",
-                    SpeechSDK.PronunciationAssessmentGradingSystem.HundredMark,
-                    SpeechSDK.PronunciationAssessmentGranularity.Phoneme,
-                    true
-                );
 
-                // Create recognizer
-                const recognizer = new SpeechSDK.SpeechRecognizer(speechConfig, audioConfig);
-                pronunciationAssessmentConfig.applyTo(recognizer);
+       // Audio playback controls
+       playButton.addEventListener('click', () => {
+           if (audioPlayback.paused) {
+               audioPlayback.play();
+               playButton.textContent = 'Pause';
+           } else {
+               audioPlayback.pause();
+               playButton.textContent = 'Play Recording';
+           }
+       });
 
-                let results = {
-                    transcription: '',
-                    scores: {
-                        accuracy: 0,
-                        fluency: 0,
-                        completeness: 0,
-                        pronunciation: 0
-                    },
-                    words: []
-                };
 
-                // Handle recognition results
-                recognizer.recognized = (s, e) => {
-                    if (e.result.reason === SpeechSDK.ResultReason.RecognizedSpeech) {
-                        const pronunciationResult = SpeechSDK.PronunciationAssessmentResult.fromResult(e.result);
-                        
-                        results.transcription += e.result.text + ' ';
-                        results.scores.accuracy = pronunciationResult.accuracyScore;
-                        results.scores.fluency = pronunciationResult.fluencyScore;
-                        results.scores.completeness = pronunciationResult.completenessScore;
-                        results.scores.pronunciation = Math.round(
-                            (pronunciationResult.accuracyScore + 
-                             pronunciationResult.fluencyScore + 
-                             pronunciationResult.completenessScore) / 3
-                        );
+       audioPlayback.addEventListener('ended', () => {
+           playButton.textContent = 'Play Recording';
+       });
 
-                        try {
-                            const detailedResults = JSON.parse(
-                                e.result.properties.getProperty(SpeechSDK.PropertyId.SpeechServiceResponse_JsonResult)
-                            );
-                            results.words = detailedResults.NBest[0].Words;
-                        } catch (error) {
-                            console.error('Error parsing detailed results:', error);
-                        }
-                    }
-                };
 
-                // Start recognition
-                await new Promise((resolve, reject) => {
-                    recognizer.recognizeOnceAsync(
-                        result => {
-                            recognizer.close();
-                            resolve(result);
-                        },
-                        error => {
-                            recognizer.close();
-                            reject(error);
-                        }
-                    );
-                });
+       audioPlayback.addEventListener('pause', () => {
+           playButton.textContent = 'Play Recording';
+       });
 
-                // Display results
-                displayResults(results);
 
-            } catch (error) {
-                console.error('Error analyzing speech:', error);
-                status.textContent = `Error: ${error.message}`;
-                feedbackDiv.innerHTML = `Error analyzing speech: ${error.message}`;
-            }
-        }
-
-        function displayResults(results) {
-            // Display transcription
-            transcriptionDiv.textContent = results.transcription || 'No transcription available';
-
-            // Generate feedback
-            let feedback = `Overall Assessment:\n`;
-            feedback += `------------------------\n`;
-            feedback += `Pronunciation Score: ${results.scores.pronunciation}%\n`;
-            feedback += `Accuracy Score: ${results.scores.accuracy}%\n`;
-            feedback += `Fluency Score: ${results.scores.fluency}%\n`;
-            feedback += `Completeness Score: ${results.scores.completeness}%\n`;
-
-            if (results.words && results.words.length > 0) {
-                feedback += `\nWord-by-word Analysis:\n`;
-                feedback += `------------------------\n`;
-                results.words.forEach(word => {
-                    feedback += `Word: "${word.Word}"\n`;
-                    feedback += `  - Accuracy: ${word.PronunciationAssessment?.AccuracyScore}%\n`;
-                    feedback += `  - Error Type: ${word.PronunciationAssessment?.ErrorType}\n`;
-                    if (word.PronunciationAssessment?.ErrorType !== 'None') {
-                        feedback += `  - Suggestion: Practice this word more carefully\n`;
-                    }
-                    feedback += `\n`;
-                });
-            }
-
-            feedbackDiv.innerHTML = feedback.replace(/\n/g, '<br>');
-            document.getElementById('rawData').textContent = JSON.stringify(results, null, 2);
-            status.textContent = 'Analysis complete';
-        }
-
-        // Audio playback controls
-        playButton.addEventListener('click', () => {
-            if (audioPlayback.paused) {
-                audioPlayback.play();
-                playButton.textContent = 'Pause';
-            } else {
-                audioPlayback.pause();
-                playButton.textContent = 'Play Recording';
-            }
-        });
-
-        // Audio playback event listeners
-        audioPlayback.addEventListener('ended', () => {
-            playButton.textContent = 'Play Recording';
-        });
-
-        audioPlayback.addEventListener('pause', () => {
-            playButton.textContent = 'Play Recording';
-        });
-
-        audioPlayback.addEventListener('play', () => {
-            playButton.textContent = 'Pause';
-        });
-
-        // Initial setup
-        document.addEventListener('DOMContentLoaded', () => {
-            checkBrowserSupport();
-            console.log('Page loaded, ready to record');
-        });
-    </script>
+       audioPlayback.addEventListener('play', () => {
+           playButton.textContent = 'Pause';
+       });
+   </script>
 </body>
 </html>
