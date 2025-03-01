@@ -1,15 +1,45 @@
-const express = require('express');
-const cors = require('cors');
-const sdk = require('microsoft-cognitiveservices-speech-sdk');
-const fs = require('fs');
-const dotenv = require('dotenv');
+import express from 'express';
+import cors from 'cors';
+import * as sdk from 'microsoft-cognitiveservices-speech-sdk';
+import fs from 'fs';
+import dotenv from 'dotenv';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+import path from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 dotenv.config();
 const app = express();
 
-app.use(cors());
-app.use(express.json());
-app.use(express.static('public'));
+// More flexible CORS configuration
+app.use(cors({
+    // Allow all origins in development
+    origin: process.env.NODE_ENV === 'production' 
+        ? process.env.ALLOWED_ORIGINS?.split(',') 
+        : '*',
+    methods: ['GET', 'POST'],
+    credentials: true
+}));
+
+app.use(express.json({ limit: '50mb' }));
+
+// Serve static files from the parent directory
+app.use(express.static(path.join(__dirname, '..')));
+
+// Routes
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'index.html'));
+});
+
+app.get('/analyze', (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'analyze.html'));
+});
+
+app.get('/test', (req, res) => {
+    res.json({ message: 'Server is running!' });
+});
 
 // Azure Speech config
 const speechConfig = sdk.SpeechConfig.fromSubscription(
@@ -19,14 +49,29 @@ const speechConfig = sdk.SpeechConfig.fromSubscription(
 
 app.post('/api/analyze-speech', async (req, res) => {
     try {
-        // Save the incoming audio blob to a temporary file
-        const audioData = req.body.audio;
-        const audioBuffer = Buffer.from(audioData.split('base64,')[1], 'base64');
-        fs.writeFileSync('temp-audio.wav', audioBuffer);
-
-        // Create audio config from the temp file
-        const audioConfig = sdk.AudioConfig.fromWavFileInput(fs.readFileSync('temp-audio.wav'));
+        console.log('Received audio analysis request');
         
+        if (!req.body || !req.body.audio) {
+            throw new Error('No audio data received');
+        }
+
+        // Extract the base64 audio data
+        const base64Data = req.body.audio.split('base64,')[1];
+        const audioBuffer = Buffer.from(base64Data, 'base64');
+        
+        // Save to temp file with timestamp to avoid conflicts
+        const tempFile = `temp-audio-${Date.now()}.wav`;
+        const tempFilePath = `${__dirname}/${tempFile}`;
+        
+        fs.writeFileSync(tempFilePath, audioBuffer);
+        console.log('Audio file saved temporarily at:', tempFilePath);
+
+        // Configure speech settings
+        speechConfig.speechRecognitionLanguage = "en-US";
+        const audioConfig = sdk.AudioConfig.fromWavFileInput(fs.readFileSync(tempFilePath));
+        
+        const recognizer = new sdk.SpeechRecognizer(speechConfig, audioConfig);
+
         // Create pronunciation assessment config
     const pronunciationAssessmentConfig = new sdk.PronunciationAssessmentConfig(
             req.body.referenceText || "This is a test.",
@@ -34,9 +79,7 @@ app.post('/api/analyze-speech', async (req, res) => {
         sdk.PronunciationAssessmentGranularity.Phoneme,
         true
     );
-
-        // Create recognizer
-        const recognizer = new sdk.SpeechRecognizer(speechConfig, audioConfig);
+        
         pronunciationAssessmentConfig.applyTo(recognizer);
 
         let results = {
@@ -45,14 +88,14 @@ app.post('/api/analyze-speech', async (req, res) => {
                 accuracy: 0,
                 fluency: 0,
                 completeness: 0,
-                prosody: 0,
                 pronunciation: 0
             },
             words: []
         };
 
-        // Handle recognition
-        recognizer.recognized = function (s, e) {
+        // Handle the recognition
+        recognizer.recognized = (s, e) => {
+            console.log('Recognition event received:', e.result);
             if (e.result.reason === sdk.ResultReason.RecognizedSpeech) {
                 const pronunciationResult = sdk.PronunciationAssessmentResult.fromResult(e.result);
                 results.transcription += e.result.text + ' ';
@@ -60,33 +103,47 @@ app.post('/api/analyze-speech', async (req, res) => {
                 results.scores.fluency = pronunciationResult.fluencyScore;
                 results.scores.completeness = pronunciationResult.completenessScore;
                 
-                // Get detailed word-level assessment
-                const detailedResults = JSON.parse(e.result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult));
-                results.words = detailedResults.NBest[0].Words;
+                try {
+                    const detailedResults = JSON.parse(
+                        e.result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult)
+                    );
+                    results.words = detailedResults.NBest[0].Words;
+                } catch (error) {
+                    console.error('Error parsing detailed results:', error);
+                }
             }
         };
 
-        // Start recognition
+        // Start recognition and wait for result
         await new Promise((resolve, reject) => {
             recognizer.recognizeOnceAsync(
                 result => {
                     recognizer.close();
+                    console.log('Recognition completed successfully');
                     resolve(result);
                 },
                 error => {
                     recognizer.close();
+                    console.error('Recognition error:', error);
                     reject(error);
                 }
             );
         });
 
         // Clean up temp file
-        fs.unlinkSync('temp-audio.wav');
+        try {
+            fs.unlinkSync(tempFilePath);
+            console.log('Temporary file deleted');
+        } catch (error) {
+            console.error('Error deleting temporary file:', error);
+        }
 
+        console.log('Sending results back to client:', results);
         res.json(results);
+
     } catch (error) {
-        console.error('Error:', error);
-        res.status(500).json({ error: 'Error processing speech analysis' });
+        console.error('Server error:', error);
+        res.status(500).json({ error: error.message });
     }
 });
 
