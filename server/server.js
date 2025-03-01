@@ -51,13 +51,7 @@ app.post('/api/analyze-speech', async (req, res) => {
     try {
         console.log('1. Received audio analysis request');
         
-        if (!req.body) {
-            console.log('2a. No request body found');
-            throw new Error('No request body received');
-        }
-
-        if (!req.body.audio) {
-            console.log('2b. No audio data in request body:', Object.keys(req.body));
+        if (!req.body || !req.body.audio) {
             throw new Error('No audio data received');
         }
 
@@ -69,12 +63,44 @@ app.post('/api/analyze-speech', async (req, res) => {
         
         const audioBuffer = Buffer.from(base64Data, 'base64');
         console.log('4. Converted to audio buffer, size:', audioBuffer.length);
+
+        // Create WAV header
+        const wavHeader = Buffer.alloc(44);
         
-        // Save to temp file with timestamp to avoid conflicts
+        // "RIFF" identifier
+        wavHeader.write('RIFF', 0);
+        // File size
+        wavHeader.writeUInt32LE(audioBuffer.length + 36, 4);
+        // "WAVE" identifier
+        wavHeader.write('WAVE', 8);
+        // "fmt " chunk
+        wavHeader.write('fmt ', 12);
+        // Chunk size
+        wavHeader.writeUInt32LE(16, 16);
+        // Audio format (1 for PCM)
+        wavHeader.writeUInt16LE(1, 20);
+        // Number of channels
+        wavHeader.writeUInt16LE(1, 22);
+        // Sample rate
+        wavHeader.writeUInt32LE(16000, 24);
+        // Byte rate
+        wavHeader.writeUInt32LE(16000 * 2, 28);
+        // Block align
+        wavHeader.writeUInt16LE(2, 32);
+        // Bits per sample
+        wavHeader.writeUInt16LE(16, 34);
+        // "data" chunk
+        wavHeader.write('data', 36);
+        // Data size
+        wavHeader.writeUInt32LE(audioBuffer.length, 40);
+
+        // Combine header and audio data
+        const wavFile = Buffer.concat([wavHeader, audioBuffer]);
+        
+        // Save to temp file
         const tempFile = `temp-audio-${Date.now()}.wav`;
-        const tempFilePath = `${__dirname}/${tempFile}`;
-        
-        fs.writeFileSync(tempFilePath, audioBuffer);
+        const tempFilePath = path.join(__dirname, tempFile);
+        fs.writeFileSync(tempFilePath, wavFile);
         console.log('Audio file saved temporarily at:', tempFilePath);
 
         // Configure speech settings

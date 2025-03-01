@@ -151,25 +151,28 @@
                try {
                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                    audioChunks = [];
-                  
-                   mediaRecorder = new MediaRecorder(stream);
-                  
+                   
+                   // Use a supported MIME type
+                   const mimeType = 'audio/webm';
+                   mediaRecorder = new MediaRecorder(stream, {
+                       mimeType: mimeType,
+                       audioBitsPerSecond: 16000
+                   });
+                   
                    mediaRecorder.ondataavailable = (event) => {
                        if (event.data.size > 0) {
                            audioChunks.push(event.data);
                        }
                    };
 
-
                    mediaRecorder.onstop = async () => {
-                       const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-                      
+                       const audioBlob = new Blob(audioChunks, { type: mimeType });
+                       
                        // Show audio playback
                        const audioUrl = URL.createObjectURL(audioBlob);
                        audioPlayback.src = audioUrl;
                        audioPlayback.style.display = 'block';
                        playButton.disabled = false;
-
 
                        // Send to server
                        const reader = new FileReader();
@@ -184,17 +187,14 @@
                                    })
                                });
 
-
                                if (!response.ok) {
                                    throw new Error(`Server error: ${response.status}`);
                                }
-
 
                                const results = await response.json();
                                transcriptionDiv.textContent = results.transcription || 'No transcription';
                                feedbackDiv.textContent = results.feedback || 'No feedback';
                                status.textContent = 'Analysis complete';
-
 
                            } catch (error) {
                                console.error('Error:', error);
@@ -202,16 +202,13 @@
                            }
                        };
 
-
                        reader.readAsDataURL(audioBlob);
                    };
-
 
                    mediaRecorder.start();
                    recordButton.textContent = 'Stop Recording';
                    recordButton.classList.add('recording');
                    status.textContent = 'Recording...';
-
 
                } catch (error) {
                    console.error('Error:', error);
@@ -246,6 +243,15 @@
        audioPlayback.addEventListener('play', () => {
            playButton.textContent = 'Pause';
        });
+   </script>
+
+   <script>
+       // Helper function to write strings to DataView
+       function writeString(view, offset, string) {
+           for (let i = 0; i < string.length; i++) {
+               view.setUint8(offset + i, string.charCodeAt(i));
+           }
+       }
    </script>
 </body>
 </html>
