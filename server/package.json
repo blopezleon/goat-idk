@@ -16,12 +16,7 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
-<<<<<<< HEAD
-    "microsoft-cognitiveservices-speech-sdk": "^1.33.1",
+    "microsoft-cognitiveservices-speech-sdk": "^1.42.0",
     "nodemon": "^3.0.3"
-=======
-    "gitignore": "^0.7.0",
-    "microsoft-cognitiveservices-speech-sdk": "^1.42.0"
->>>>>>> 2c0f92067a8b81572cf926f9a50d4fab3c4d266f
   }
 }
