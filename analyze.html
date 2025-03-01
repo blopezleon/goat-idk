@@ -5,8 +5,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Speech Analysis - AI Speech Therapist</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <!-- Add Microsoft Speech SDK with integrity check -->
     <script src="https://cdn.jsdelivr.net/npm/microsoft-cognitiveservices-speech-sdk@latest/distrib/browser/microsoft.cognitiveservices.speech.sdk.bundle-min.js"></script>
+    <script type="module">
+        import config from './js/config.js';
+        
+        // Initialize Speech SDK with config values
+        let speechConfig;
+        try {
+            speechConfig = SpeechSDK.SpeechConfig.fromSubscription(
+                config.AZURE_SPEECH_KEY,
+                config.AZURE_SPEECH_REGION
+            );
+            speechConfig.speechRecognitionLanguage = "en-US";
+            console.log('Speech SDK initialized successfully');
+        } catch (error) {
+            console.error('Error initializing Speech SDK:', error);
+            document.getElementById('status').textContent = 'Error: Could not initialize Speech SDK';
+        }
+
+        // Rest of your JavaScript code...
+        // Make sure to use config.AZURE_SPEECH_KEY and config.AZURE_SPEECH_REGION instead of hardcoded values
+    </script>
     <style>
         body {
             font-family: 'Poppins', sans-serif;
@@ -122,10 +141,6 @@
     </div>
 
     <script>
-        // Azure Speech Service configuration
-        const AZURE_SPEECH_KEY = 'FHBqJ5OVRP830JoTb43lNq7oXN4egpar2IJRXQ6JLw7L9kna7qquJQQJ99BCACHYHv6XJ3w3AAAAACOG3eYs';
-        const AZURE_SPEECH_REGION = 'eastus2';
-
         let mediaRecorder;
         let audioChunks = [];
         let audioBlob = null;
