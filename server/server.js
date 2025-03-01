@@ -49,15 +49,26 @@ const speechConfig = sdk.SpeechConfig.fromSubscription(
 
 app.post('/api/analyze-speech', async (req, res) => {
     try {
-        console.log('Received audio analysis request');
+        console.log('1. Received audio analysis request');
         
-        if (!req.body || !req.body.audio) {
+        if (!req.body) {
+            console.log('2a. No request body found');
+            throw new Error('No request body received');
+        }
+
+        if (!req.body.audio) {
+            console.log('2b. No audio data in request body:', Object.keys(req.body));
             throw new Error('No audio data received');
         }
 
+        console.log('2. Audio data received, length:', req.body.audio.length);
+        
         // Extract the base64 audio data
         const base64Data = req.body.audio.split('base64,')[1];
+        console.log('3. Base64 data extracted, length:', base64Data.length);
+        
         const audioBuffer = Buffer.from(base64Data, 'base64');
+        console.log('4. Converted to audio buffer, size:', audioBuffer.length);
         
         // Save to temp file with timestamp to avoid conflicts
         const tempFile = `temp-audio-${Date.now()}.wav`;
