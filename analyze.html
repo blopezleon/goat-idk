@@ -205,8 +205,34 @@
                                .then(response => response.json())
                                .then(results => {
                                    console.log('Server response:', results);
+                                   
+                                   // Display transcription
                                    transcriptionDiv.textContent = results.transcription || 'No transcription';
-                                   feedbackDiv.textContent = results.feedback || 'No feedback';
+                                   
+                                   // Display detailed scores
+                                   let feedbackHtml = '<h3>Overall Scores:</h3>';
+                                   feedbackHtml += `<p>Pronunciation: ${results.overallScore.PronScore}</p>`;
+                                   feedbackHtml += `<p>Accuracy: ${results.overallScore.AccuracyScore}</p>`;
+                                   feedbackHtml += `<p>Fluency: ${results.overallScore.FluencyScore}</p>`;
+                                   feedbackHtml += `<p>Completeness: ${results.overallScore.CompletenessScore}</p>`;
+                                   
+                                   feedbackHtml += '<h3>Word-by-Word Scores:</h3>';
+                                   feedbackHtml += '<table border="1"><tr><th>Word</th><th>Pronunciation</th><th>Accuracy</th><th>Fluency</th><th>Completeness</th><th>Prosody</th></tr>';
+                                   
+                                   results.wordScores.forEach(score => {
+                                       feedbackHtml += `<tr>
+                                           <td>${score.word}</td>
+                                           <td>${score.pronunciation}</td>
+                                           <td>${score.accuracy}</td>
+                                           <td>${score.fluency}</td>
+                                           <td>${score.completeness}</td>
+                                           <td>${score.prosody}</td>
+                                       </tr>`;
+                                   });
+                                   
+                                   feedbackHtml += '</table>';
+                                   feedbackDiv.innerHTML = feedbackHtml;
+                                   
                                    status.textContent = 'Analysis complete';
                                })
                                .catch(error => {

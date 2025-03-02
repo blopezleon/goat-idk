@@ -69,18 +69,40 @@ app.post('/api/analyze-speech', upload.single('audio'), async (req, res) => {
         speechConfig.speechRecognitionLanguage = "en-US";
 
         try {
-            // Create audio config from the file
+            // Create pronunciation assessment config
+            const referenceText = "This is a test"; // You can make this dynamic
+            const pronunciationConfig = new sdk.PronunciationAssessmentConfig(
+                referenceText,
+                sdk.PronunciationAssessmentGradingSystem.HundredMark,
+                sdk.PronunciationAssessmentGranularity.Word,
+                true
+            );
+
+            // Create audio config
             const audioConfig = sdk.AudioConfig.fromWavFileInput(
                 fs.readFileSync(req.file.path)
             );
 
-            // Create speech recognizer
+            // Create speech recognizer with pronunciation assessment
             const recognizer = new sdk.SpeechRecognizer(speechConfig, audioConfig);
+            pronunciationConfig.applyTo(recognizer);
 
-            // Perform recognition
+            // Perform recognition and assessment
             const result = await new Promise((resolve, reject) => {
+                let assessmentResults = [];
+
+                recognizer.recognized = (s, e) => {
+                    if (e.result.text) {
+                        const pronunciation = sdk.PronunciationAssessmentResult.fromResult(e.result);
+                        assessmentResults.push({
+                            text: e.result.text,
+                            pronunciation: pronunciation
+                        });
+                    }
+                };
+
                 recognizer.recognizeOnceAsync(
-                    result => resolve(result),
+                    result => resolve({ result, assessmentResults }),
                     error => reject(error)
                 );
             });
@@ -89,10 +111,36 @@ app.post('/api/analyze-speech', upload.single('audio'), async (req, res) => {
             recognizer.close();
             fs.unlinkSync(req.file.path);
 
-            console.log('Recognition result:', result);
+            // Process results
+            const transcription = result.result.text;
+            const wordScores = result.assessmentResults.map(assessment => {
+                return {
+                    word: assessment.text,
+                    pronunciation: assessment.pronunciation.pronunciationScore,
+                    accuracy: assessment.pronunciation.accuracyScore,
+                    fluency: assessment.pronunciation.fluencyScore,
+                    completeness: assessment.pronunciation.completenessScore
+                };
+            });
+
+            // Calculate overall scores
+            const overallScore = {
+                PronScore: result.assessmentResults[0]?.pronunciation.pronunciationScore || 0,
+                AccuracyScore: result.assessmentResults[0]?.pronunciation.accuracyScore || 0,
+                FluencyScore: result.assessmentResults[0]?.pronunciation.fluencyScore || 0,
+                CompletenessScore: result.assessmentResults[0]?.pronunciation.completenessScore || 0
+            };
+
+            console.log('Processed results:', {
+                transcription,
+                overallScore,
+                wordScores
+            });
 
             res.json({
-                transcription: result.text,
+                transcription,
+                overallScore,
+                wordScores,
                 feedback: 'Speech analysis completed'
             });
 
