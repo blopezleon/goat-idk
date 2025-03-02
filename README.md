@@ -13,3 +13,5 @@ The following environment variables are required:
 
 - `AZURE_SPEECH_KEY`: Your Azure Speech Service API key
 - `AZURE_SPEECH_REGION`: Your Azure Speech Service region 
+
+
