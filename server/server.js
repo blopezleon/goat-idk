@@ -7,6 +7,7 @@ import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import path from 'path';
+import OpenAI from 'openai';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -34,6 +35,14 @@ app.use(express.json({ limit: '50mb' }));
 
 // Serve static files from the parent directory
 app.use(express.static(path.join(__dirname, '..')));
+
+// Initialize OpenAI
+const openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY
+});
+
+// Add this near the top after OpenAI initialization
+console.log('OpenAI API Key status:', process.env.OPENAI_API_KEY ? 'Present' : 'Missing');
 
 // Routes
 app.get('/', (req, res) => {
@@ -163,6 +172,62 @@ app.post('/api/analyze-speech', upload.single('audio'), async (req, res) => {
                 phonemes: result.assessmentResults[0]?.phonemes || [],
                 feedback: 'Speech analysis completed'
             };
+
+            // Prepare data for OpenAI
+            const lowScoringPhonemes = finalResponse.phonemes
+                .filter(p => p.accuracyScore < 70)
+                .map(p => ({
+                    phoneme: p.phoneme,
+                    score: p.accuracyScore,
+                    word: p.fromWord
+                }));
+
+            if (lowScoringPhonemes.length > 0) {
+                try {
+                    console.log('Attempting OpenAI API call with phonemes:', JSON.stringify(lowScoringPhonemes, null, 2));
+                    
+                    const aiPrompt = `As a speech therapist, provide specific advice for improving the pronunciation of these phonemes:
+                        ${JSON.stringify(lowScoringPhonemes, null, 2)}
+                        
+                        For each problematic phoneme:
+                        1. Explain how to position the mouth, tongue, and lips
+                        2. Provide a simple exercise to practice the sound
+                        3. Suggest 2-3 simple practice words
+                        
+                        Format the response in clear, simple bullet points. Make sure that it is formated in a way which is easy to read and not in html format.`;
+
+                    console.log('Sending prompt to OpenAI:', aiPrompt);
+
+                    const aiResponse = await openai.chat.completions.create({
+                        model: "gpt-3.5-turbo",
+                        messages: [
+                            {
+                                role: "system",
+                                content: "You are a helpful and kind speech therapist providing specific, actionable advice for pronunciation improvement."
+                            },
+                            {
+                                role: "user",
+                                content: aiPrompt
+                            }
+                        ],
+                        temperature: 0.7,
+                        max_tokens: 500
+                    });
+
+                    console.log('Received OpenAI response:', aiResponse.choices[0].message.content);
+                    finalResponse.aiFeedback = aiResponse.choices[0].message.content;
+                } catch (error) {
+                    console.error('OpenAI API error details:', {
+                        message: error.message,
+                        type: error.type,
+                        stack: error.stack
+                    });
+                    finalResponse.aiFeedback = "AI feedback unavailable at the moment. Error: " + error.message;
+                }
+            } else {
+                console.log('No low-scoring phonemes found, skipping OpenAI call');
+                finalResponse.aiFeedback = "Great job! All phonemes were pronounced well.";
+            }
 
             console.log('Final response:', JSON.stringify(finalResponse, null, 2));
             res.json(finalResponse);
