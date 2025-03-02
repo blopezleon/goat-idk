@@ -218,68 +218,56 @@
                                })
                                .then(response => response.json())
                                .then(results => {
+                                   console.log('Received data from server:', JSON.stringify(results, null, 2));
+                                   
                                    console.log('Server response:', results);
                                    
                                    // Display transcription
                                    transcriptionDiv.textContent = results.transcription || 'No transcription';
 
-                                   // Create word-by-word analysis display
-                                   let wordAnalysisHtml = '<h3>Word-by-Word Analysis</h3>';
-                                   wordAnalysisHtml += '<div class="word-analysis">';
+                                   // Create word-by-word analysis with phonemes
+                                   let wordAnalysisHtml = '<h3>Word-by-Word Analysis with Phonemes</h3>';
+                                   wordAnalysisHtml += '<div style="display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center;">';
                                    
-                                   if (results.wordAnalysis && results.wordAnalysis.length > 0) {
-                                       results.wordAnalysis.forEach(word => {
+                                   if (results.words && results.words.length > 0) {
+                                       results.words.forEach(word => {
                                            const accuracyScore = word.accuracyScore || 0;
-                                           const pronunciationScore = word.pronunciation?.pronunciationScore || 0;
-                                           const fluencyScore = word.pronunciation?.fluencyScore || 0;
-                                           const completenessScore = word.pronunciation?.completenessScore || 0;
-                                           
                                            const accuracyColor = getScoreColor(accuracyScore);
-                                           const pronunciationColor = getScoreColor(pronunciationScore);
+                                           
+                                           let phonemesHtml = '';
+                                           if (word.phonemes && word.phonemes.length > 0) {
+                                               phonemesHtml += '<div class="phonemes" style="margin-top: 0.5rem; font-size: 0.9em;">';
+                                               phonemesHtml += '<div style="margin-bottom: 0.3rem; color: #666;">Phonemes:</div>';
+                                               word.phonemes.forEach(phoneme => {
+                                                   const phonemeColor = getScoreColor(phoneme.accuracyScore);
+                                                   phonemesHtml += `
+                                                       <span style="
+                                                           display: inline-block;
+                                                           margin: 0.1rem;
+                                                           padding: 0.2rem 0.4rem;
+                                                           background: #f8f9fa;
+                                                           border-radius: 4px;
+                                                           color: ${phonemeColor};">
+                                                           ${phoneme.phoneme}
+                                                       </span>`;
+                                               });
+                                               phonemesHtml += '</div>';
+                                           }
                                            
                                            wordAnalysisHtml += `
                                                <div class="word-card" style="
                                                    border: 1px solid #ddd;
                                                    border-radius: 8px;
                                                    padding: 1rem;
-                                                   margin: 0.5rem 0;
+                                                   text-align: center;
                                                    background: white;
-                                                   box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                                                   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                                                   min-width: 150px;">
                                                    <h4 style="margin: 0 0 0.5rem 0; font-size: 1.2em;">${word.word || 'Unknown Word'}</h4>
-                                                   <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem;">
-                                                       <div>
-                                                           <strong>Accuracy:</strong> 
-                                                           <span style="color: ${accuracyColor}; font-size: 1.1em; font-weight: bold;">
-                                                               ${accuracyScore.toFixed(1)}%
-                                                           </span>
-                                                           ${accuracyScore < 60 ? '<br><small style="color: #e74c3c;">(Needs improvement)</small>' : ''}
-                                                       </div>
-                                                       <div>
-                                                           <strong>Pronunciation:</strong> 
-                                                           <span style="color: ${pronunciationColor}; font-size: 1.1em; font-weight: bold;">
-                                                               ${pronunciationScore.toFixed(1)}%
-                                                           </span>
-                                                           ${pronunciationScore < 60 ? '<br><small style="color: #e74c3c;">(Needs improvement)</small>' : ''}
-                                                       </div>
-                                                       <div>
-                                                           <strong>Fluency:</strong> 
-                                                           <span style="color: ${getScoreColor(fluencyScore)}; font-size: 1.1em; font-weight: bold;">
-                                                               ${fluencyScore.toFixed(1)}%
-                                                           </span>
-                                                           ${fluencyScore < 60 ? '<br><small style="color: #e74c3c;">(Needs improvement)</small>' : ''}
-                                                       </div>
-                                                       <div>
-                                                           <strong>Completeness:</strong> 
-                                                           <span style="color: ${getScoreColor(completenessScore)}; font-size: 1.1em; font-weight: bold;">
-                                                               ${completenessScore.toFixed(1)}%
-                                                           </span>
-                                                           ${completenessScore < 60 ? '<br><small style="color: #e74c3c;">(Needs improvement)</small>' : ''}
-                                                       </div>
+                                                   <div style="color: ${accuracyColor}; font-size: 1.1em; font-weight: bold;">
+                                                       ${accuracyScore.toFixed(1)}%
                                                    </div>
-                                                   ${word.errorType && word.errorType !== 'None' ? 
-                                                       `<div style="margin-top: 0.5rem; color: #e74c3c;">
-                                                           <strong>Error:</strong> ${word.errorType}
-                                                       </div>` : ''}
+                                                   ${phonemesHtml}
                                                </div>`;
                                        });
                                    } else {

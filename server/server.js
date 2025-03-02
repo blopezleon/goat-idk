@@ -85,7 +85,7 @@ app.post('/api/analyze-speech', upload.single('audio'), async (req, res) => {
             const pronunciationConfig = new sdk.PronunciationAssessmentConfig(
                 currentReferenceText,
                 sdk.PronunciationAssessmentGradingSystem.HundredMark,
-                sdk.PronunciationAssessmentGranularity.Word,
+                sdk.PronunciationAssessmentGranularity.Phoneme,
                 true
             );
 
@@ -116,31 +116,34 @@ app.post('/api/analyze-speech', upload.single('audio'), async (req, res) => {
                 recognizer.recognized = (s, e) => {
                     if (e.result.text) {
                         const pronunciation = sdk.PronunciationAssessmentResult.fromResult(e.result);
-                        const words = pronunciation.detailResult?.Words || [];
-                        console.log('Pronunciation details:', JSON.stringify(pronunciation.detailResult, null, 2));
+                        console.log('Raw pronunciation result:', pronunciation);
                         
+                        // Try to get detailed phoneme results
+                        const nBestResult = e.result.NBest && e.result.NBest[0];
+                        const words = nBestResult?.Words || [];
+                        
+                        const wordsWithPhonemes = words.map(word => ({
+                            word: word.Word,
+                            accuracyScore: word.PronunciationAssessment?.AccuracyScore || 0,
+                            phonemes: word.Phonemes?.map(phoneme => ({
+                                phoneme: phoneme.Phoneme,
+                                accuracyScore: phoneme.PronunciationAssessment?.AccuracyScore || 0
+                            })) || []
+                        }));
+
                         assessmentResults.push({
                             text: e.result.text,
                             pronunciation: pronunciation,
-                            words: words.map(word => ({
-                                Word: word.Word,
-                                AccuracyScore: word.PronunciationAssessment?.AccuracyScore,
-                                ErrorType: word.PronunciationAssessment?.ErrorType || 'None',
-                                Duration: word.Duration,
-                                Offset: word.Offset,
-                                PronunciationAssessment: {
-                                    AccuracyScore: word.PronunciationAssessment?.AccuracyScore || 0,
-                                    CompletenessScore: word.PronunciationAssessment?.CompletenessScore || 0,
-                                    FluencyScore: word.PronunciationAssessment?.FluencyScore || 0,
-                                    PronunciationScore: word.PronunciationAssessment?.PronunciationScore || 0
-                                }
-                            }))
+                            words: wordsWithPhonemes
                         });
                     }
                 };
 
                 recognizer.recognizeOnceAsync(
-                    result => resolve({ result, assessmentResults }),
+                    result => {
+                        console.log('Full recognition result:', result);
+                        resolve({ result, assessmentResults });
+                    },
                     error => reject(error)
                 );
             });
@@ -149,44 +152,12 @@ app.post('/api/analyze-speech', upload.single('audio'), async (req, res) => {
             recognizer.close();
             fs.unlinkSync(req.file.path);
 
-            // Process results
-            const transcription = result.result.text;
-            
-            // Process word-by-word results with better error handling
-            const wordAnalysis = result.assessmentResults[0]?.words?.map(word => ({
-                word: word.Word,
-                accuracyScore: word.AccuracyScore || 0,
-                errorType: word.ErrorType || 'None',
-                duration: word.Duration,
-                offset: word.Offset,
-                pronunciation: {
-                    accuracyScore: word.PronunciationAssessment?.AccuracyScore || 0,
-                    completenessScore: word.PronunciationAssessment?.CompletenessScore || 0,
-                    fluencyScore: word.PronunciationAssessment?.FluencyScore || 0,
-                    pronunciationScore: word.PronunciationAssessment?.PronunciationScore || 0
-                }
-            })) || [];
-
-            console.log('Word Analysis:', JSON.stringify(wordAnalysis, null, 2));
-
-            // Calculate overall scores
-            const overallScore = {
-                PronScore: result.assessmentResults[0]?.pronunciation.pronunciationScore || 0,
-                AccuracyScore: result.assessmentResults[0]?.pronunciation.accuracyScore || 0,
-                FluencyScore: result.assessmentResults[0]?.pronunciation.fluencyScore || 0,
-                CompletenessScore: result.assessmentResults[0]?.pronunciation.completenessScore || 0
-            };
-
-            console.log('Processed results:', {
-                transcription,
-                overallScore,
-                wordAnalysis
-            });
+            // Process results including phonemes
+            const detailedWords = result.assessmentResults[0]?.words || [];
 
             res.json({
-                transcription,
-                overallScore,
-                wordAnalysis,
+                transcription: result.result.text,
+                words: detailedWords,
                 feedback: 'Speech analysis completed'
             });
 
