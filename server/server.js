@@ -8,12 +8,21 @@ import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import path from 'path';
 import OpenAI from 'openai';
+import { join } from 'path';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Load environment variables
-dotenv.config();
+// Add debug logging for .env path
+const envPath = join(__dirname, '../.env');
+console.log('Looking for .env file at:', envPath);
+dotenv.config({ path: envPath });
+
+// Add validation logging
+console.log('Environment variables loaded:');
+console.log('SPEECH_KEY:', process.env.SPEECH_KEY ? 'Present' : 'Missing');
+console.log('SPEECH_REGION:', process.env.SPEECH_REGION ? 'Present' : 'Missing');
+console.log('OPENAI_API_KEY:', process.env.OPENAI_API_KEY ? 'Present' : 'Missing');
 
 // Check for required environment variables
 if (!process.env.SPEECH_KEY || !process.env.SPEECH_REGION) {
