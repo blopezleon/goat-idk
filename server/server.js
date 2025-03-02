@@ -115,51 +115,57 @@ app.post('/api/analyze-speech', upload.single('audio'), async (req, res) => {
 
                 recognizer.recognized = (s, e) => {
                     if (e.result.text) {
-                        const pronunciation = sdk.PronunciationAssessmentResult.fromResult(e.result);
-                        console.log('Raw pronunciation result:', pronunciation);
+                        console.log('Full recognition result:', e.result);
                         
-                        // Try to get detailed phoneme results
-                        const nBestResult = e.result.NBest && e.result.NBest[0];
-                        const words = nBestResult?.Words || [];
-                        
-                        const wordsWithPhonemes = words.map(word => ({
-                            word: word.Word,
-                            accuracyScore: word.PronunciationAssessment?.AccuracyScore || 0,
-                            phonemes: word.Phonemes?.map(phoneme => ({
-                                phoneme: phoneme.Phoneme,
-                                accuracyScore: phoneme.PronunciationAssessment?.AccuracyScore || 0
-                            })) || []
-                        }));
+                        // Access the properties directly from the result
+                        const properties = JSON.parse(e.result.properties.getProperty(sdk.PropertyId.SpeechServiceResponse_JsonResult));
+                        console.log('Parsed properties:', properties);
+
+                        // Extract all phonemes
+                        const allPhonemes = [];
+                        if (properties.NBest && properties.NBest[0] && properties.NBest[0].Words) {
+                            properties.NBest[0].Words.forEach(word => {
+                                if (word.Phonemes) {
+                                    word.Phonemes.forEach(phoneme => {
+                                        allPhonemes.push({
+                                            phoneme: phoneme.Phoneme,
+                                            accuracyScore: Math.round(phoneme.PronunciationAssessment?.AccuracyScore || 0),
+                                            fromWord: word.Word,
+                                            duration: phoneme.Duration,
+                                            offset: phoneme.Offset
+                                        });
+                                    });
+                                }
+                            });
+                        }
+
+                        console.log('Extracted phonemes:', allPhonemes);
 
                         assessmentResults.push({
                             text: e.result.text,
-                            pronunciation: pronunciation,
-                            words: wordsWithPhonemes
+                            phonemes: allPhonemes
                         });
                     }
                 };
 
                 recognizer.recognizeOnceAsync(
                     result => {
-                        console.log('Full recognition result:', result);
+                        console.log('Recognition completed');
                         resolve({ result, assessmentResults });
                     },
                     error => reject(error)
                 );
             });
 
-            // Clean up
-            recognizer.close();
-            fs.unlinkSync(req.file.path);
-
-            // Process results including phonemes
-            const detailedWords = result.assessmentResults[0]?.words || [];
-
-            res.json({
+            // Format the final response
+            const finalResponse = {
                 transcription: result.result.text,
-                words: detailedWords,
+                phonemes: result.assessmentResults[0]?.phonemes || [],
                 feedback: 'Speech analysis completed'
-            });
+            };
+
+            console.log('Final response:', JSON.stringify(finalResponse, null, 2));
+            res.json(finalResponse);
 
         } catch (error) {
             console.error('Speech recognition error:', error);
