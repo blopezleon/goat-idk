@@ -403,9 +403,8 @@
           
            <h3>Analysis Results</h3>
            <div id="feedback">Results will appear here...</div>
-
            <div id="nextStepSection" style="display: none; margin-top: 2rem;">
-               <button id="practiceButton" style="
+               <button id="practiceButton" onclick="startPractice()" style="
                    display: inline-block;
                    padding: 1rem 2rem;
                    background-color: #9b59b6;
@@ -415,7 +414,8 @@
                    font-weight: 500;
                    cursor: pointer;
                    transition: all 0.3s ease;
-                   font-size: 1.1em;">
+                   font-size: 1.1em;
+                   text-decoration: none;">
                    Start Personalized Practice
                </button>
            </div>
@@ -427,6 +427,7 @@
        let mediaRecorder;
        let audioChunks = [];
        let audioUrl;
+       let problemSounds = [];  // Add this at the top with other variables
        
        const testSentence = "The quick brown fox jumped over the lazy dogs while six big zebras watched quietly through the bushes.";
        
@@ -660,8 +661,8 @@
                                        const criticalSounds = [...new Set(criticalPhonemes.map(p => p.phoneme))];
                                        const minorSounds = [...new Set(minorPhonemes.map(p => p.phoneme))];
                                        
-                                       // Store all problem sounds for practice page
-                                       const problemSounds = [...criticalSounds, ...minorSounds];
+                                       // Update the global problemSounds variable
+                                       problemSounds = [...criticalSounds, ...minorSounds];
 
                                        let analysisHtml = '<div style="padding: 1.5rem; background: white; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">';
                                        
@@ -778,8 +779,9 @@
                                                analysisHtml += '</div></div>';
                                            }
                                            
-                                           // Show the next step section
+                                           // Show the next step section and update localStorage
                                            document.getElementById('nextStepSection').style.display = 'block';
+                                           localStorage.setItem('problemSounds', JSON.stringify(problemSounds));
                                        } else {
                                            analysisHtml += `
                                                <div style="text-align: center; color: #27ae60;">
@@ -787,6 +789,9 @@
                                                    <p>You pronounced all sounds clearly. Great job!</p>
                                                </div>
                                            `;
+                                           // Hide the practice button if no problems found
+                                           document.getElementById('nextStepSection').style.display = 'none';
+                                           localStorage.removeItem('problemSounds');
                                        }
 
                                        analysisHtml += '</div>';
@@ -799,12 +804,9 @@
                                    document.getElementById('rawData').textContent = JSON.stringify(results, null, 2);
 
                                    // Add practice button handler
-                                   document.getElementById('practiceButton').addEventListener('click', () => {
-                                       // Store problem sounds in localStorage for the practice page
-                                       localStorage.setItem('problemSounds', JSON.stringify(problemSounds));
-                                       // Redirect to practice page (you'll create this later)
-                                       window.location.href = '/practice.html';
-                                   });
+                                   document.getElementById('practiceButton').onclick = () => {
+                                       window.location.href = 'practice.html';
+                                   };
                                })
                                .catch(error => {
                                    console.error('Server error:', error);
@@ -1003,6 +1005,16 @@
                'er': 'mouth-r'
            };
            return mouthPositions[phoneme.toLowerCase()] || 'mouth-ah';
+       }
+
+       // Add this function before the existing script content
+       function startPractice() {
+           // Ensure problem sounds are stored in localStorage
+           if (problemSounds && problemSounds.length > 0) {
+               localStorage.setItem('problemSounds', JSON.stringify(problemSounds));
+           }
+           // Navigate to practice page
+           window.location.href = 'practice.html';
        }
    </script>
 </body>
