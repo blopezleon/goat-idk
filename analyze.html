@@ -223,67 +223,101 @@
                                    // Display transcription
                                    transcriptionDiv.textContent = results.transcription || 'No transcription';
 
-                                   // Create phoneme analysis display
-                                   let analysisHtml = '<h3>Phoneme Analysis</h3>';
-                                   analysisHtml += '<div style="display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center; padding: 1rem;">';
-                                   
+                                   // Group phonemes by word
+                                   const phonemesByWord = {};
                                    if (results.phonemes && results.phonemes.length > 0) {
                                        results.phonemes.forEach(phoneme => {
-                                           const accuracyScore = phoneme.accuracyScore || 0;
-                                           const accuracyColor = getScoreColor(accuracyScore);
-                                           
+                                           if (!phonemesByWord[phoneme.fromWord]) {
+                                               phonemesByWord[phoneme.fromWord] = [];
+                                           }
+                                           phonemesByWord[phoneme.fromWord].push(phoneme);
+                                       });
+                                   }
+
+                                   // Create phoneme analysis display
+                                   let analysisHtml = '<h3>Phoneme Analysis</h3>';
+                                   
+                                   if (Object.keys(phonemesByWord).length > 0) {
+                                       analysisHtml += '<div style="display: flex; flex-direction: column; gap: 1.5rem; padding: 1rem;">';
+                                       
+                                       // For each word
+                                       Object.entries(phonemesByWord).forEach(([word, phonemes]) => {
                                            analysisHtml += `
                                                <div style="
-                                                   display: inline-flex;
-                                                   flex-direction: column;
-                                                   align-items: center;
                                                    background: white;
-                                                   border: 1px solid #ddd;
                                                    border-radius: 8px;
-                                                   padding: 0.8rem;
-                                                   min-width: 80px;
+                                                   padding: 1rem;
                                                    box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                                                   <span style="
-                                                       font-size: 1.2em;
-                                                       font-weight: bold;
+                                                   <h4 style="
+                                                       margin: 0 0 0.8rem 0;
                                                        color: #333;
-                                                       margin-bottom: 0.3rem;">
-                                                       ${phoneme.phoneme}
-                                                   </span>
-                                                   <span style="
-                                                       color: ${accuracyColor};
-                                                       font-weight: bold;
-                                                       font-size: 1.1em;">
-                                                       ${accuracyScore}%
-                                                   </span>
-                                                   <span style="
-                                                       font-size: 0.8em;
-                                                       color: #666;
-                                                       margin-top: 0.3rem;">
-                                                       from "${phoneme.fromWord}"
-                                                   </span>
+                                                       font-size: 1.2em;
+                                                       border-bottom: 1px solid #eee;
+                                                       padding-bottom: 0.5rem;">
+                                                       "${word}"
+                                                   </h4>
+                                                   <div style="
+                                                       display: flex;
+                                                       flex-wrap: wrap;
+                                                       gap: 0.5rem;
+                                                       justify-content: flex-start;">`;
+                                               
+                                               // For each phoneme in the word
+                                               phonemes.forEach(phoneme => {
+                                                   const accuracyScore = phoneme.accuracyScore || 0;
+                                                   const accuracyColor = getScoreColor(accuracyScore);
+                                                   
+                                                   analysisHtml += `
+                                                       <div style="
+                                                           display: inline-flex;
+                                                           flex-direction: column;
+                                                           align-items: center;
+                                                           background: #f8f9fa;
+                                                           border: 1px solid #ddd;
+                                                           border-radius: 8px;
+                                                           padding: 0.6rem;
+                                                           min-width: 60px;">
+                                                           <span style="
+                                                               font-size: 1.1em;
+                                                               font-weight: bold;
+                                                               color: #333;
+                                                               margin-bottom: 0.2rem;">
+                                                               ${phoneme.phoneme}
+                                                           </span>
+                                                           <span style="
+                                                               color: ${accuracyColor};
+                                                               font-weight: bold;
+                                                               font-size: 1em;">
+                                                               ${accuracyScore}%
+                                                           </span>
+                                                       </div>`;
+                                               });
+                                               
+                                               analysisHtml += `
+                                                       </div>
+                                                   </div>`;
+                                           });
+                                           
+                                           analysisHtml += '</div>';
+                                       } else {
+                                           analysisHtml += `
+                                               <div style="text-align: center; padding: 2rem;">
+                                                   <p style="color: #e74c3c; font-size: 1.1em;">No phoneme analysis available.</p>
+                                                   <p>Please try speaking more clearly or check your microphone.</p>
                                                </div>`;
-                                       });
-                                   } else {
-                                       analysisHtml += `
-                                           <div style="text-align: center; padding: 2rem;">
-                                               <p style="color: #e74c3c; font-size: 1.1em;">No phoneme analysis available.</p>
-                                               <p>Please try speaking more clearly or check your microphone.</p>
-                                           </div>`;
-                                   }
-                                   
-                                   analysisHtml += '</div>';
-                                   feedbackDiv.innerHTML = analysisHtml;
-                                   
-                                   status.textContent = 'Analysis complete';
+                                       }
+                                       
+                                       feedbackDiv.innerHTML = analysisHtml;
+                                       
+                                       status.textContent = 'Analysis complete';
 
-                                   // Display raw data
-                                   document.getElementById('rawData').textContent = JSON.stringify(results, null, 2);
-                               })
-                               .catch(error => {
-                                   console.error('Server error:', error);
-                                   status.textContent = 'Server error: ' + error.message;
-                               });
+                                       // Display raw data
+                                       document.getElementById('rawData').textContent = JSON.stringify(results, null, 2);
+                                   })
+                                   .catch(error => {
+                                       console.error('Server error:', error);
+                                       status.textContent = 'Server error: ' + error.message;
+                                   });
                            });
                        };
 
