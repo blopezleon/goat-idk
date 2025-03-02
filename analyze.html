@@ -110,7 +110,14 @@
    <div class="container">
        <div class="analysis-section">
            <h2>Speech Analysis</h2>
-           <div class="button-group">
+           
+           <h3>Practice Tongue Twisters</h3>
+           <button id="tongueTwisterButton" class="record-button">Generate Tongue Twister</button>
+           <div id="tongueTwisterDisplay" style="margin-top: 1rem; padding: 1rem; background: #f8f9fa; border-radius: 5px;">
+               Click the button to get a tongue twister...
+           </div>
+
+           <div class="button-group" style="margin-top: 2rem;">
                <button id="recordButton" class="record-button">Start Recording</button>
                <button id="playButton" class="play-button" disabled>Play Recording</button>
            </div>
@@ -123,6 +130,13 @@
           
            <h3>AI Feedback</h3>
            <div id="feedback">Feedback will appear here...</div>
+
+           <div class="analysis-section">
+               <h3>Raw Analysis Data</h3>
+               <pre id="rawData" style="background: #f8f9fa; padding: 1rem; border-radius: 5px; overflow-x: auto;">
+                   Raw data will appear here...
+               </pre>
+           </div>
        </div>
    </div>
 
@@ -234,6 +248,9 @@
                                    feedbackDiv.innerHTML = feedbackHtml;
                                    
                                    status.textContent = 'Analysis complete';
+
+                                   // Display raw data
+                                   document.getElementById('rawData').textContent = JSON.stringify(results, null, 2);
                                })
                                .catch(error => {
                                    console.error('Server error:', error);
@@ -255,6 +272,34 @@
                    status.textContent = 'Error: ' + error.message;
                }
            }
+       });
+
+       // Tongue twister functionality
+       const tongueTwisters = [
+           "She sells seashells by the seashore",
+           "Peter Piper picked a peck of pickled peppers",
+           "How much wood would a woodchuck chuck if a woodchuck could chuck wood",
+           "Red lorry, yellow lorry",
+           "Unique New York"
+       ];
+
+       let currentTongueTwister = "";
+       const tongueTwisterButton = document.getElementById('tongueTwisterButton');
+       const tongueTwisterDisplay = document.getElementById('tongueTwisterDisplay');
+
+       tongueTwisterButton.addEventListener('click', () => {
+           currentTongueTwister = tongueTwisters[Math.floor(Math.random() * tongueTwisters.length)];
+           tongueTwisterDisplay.textContent = currentTongueTwister;
+           
+           // Send the new reference text to the server
+           fetch('http://127.0.0.1:3000/api/set-reference', {
+               method: 'POST',
+               headers: {
+                   'Content-Type': 'application/json',
+               },
+               body: JSON.stringify({ referenceText: currentTongueTwister })
+           })
+           .catch(error => console.error('Error setting reference text:', error));
        });
 
        playButton.onclick = () => {

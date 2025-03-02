@@ -25,7 +25,7 @@ const upload = multer({ dest: 'uploads/' });
 
 // More flexible CORS configuration
 app.use(cors({
-    origin: ['http://127.0.0.1:5500', 'http://localhost:5500'],
+    origin: ['http://127.0.0.1:5500', 'http://localhost:3000'],
     methods: ['GET', 'POST'],
     credentials: true
 }));
@@ -46,6 +46,18 @@ app.get('/analyze', (req, res) => {
 
 app.get('/test', (req, res) => {
     res.json({ message: 'Server is running!' });
+});
+
+// Add reference text endpoint
+let currentReferenceText = "Please generate a tongue twister first";
+
+app.post('/api/set-reference', (req, res) => {
+    if (req.body && req.body.referenceText) {
+        currentReferenceText = req.body.referenceText;
+        res.json({ success: true, message: 'Reference text updated' });
+    } else {
+        res.status(400).json({ error: 'No reference text provided' });
+    }
 });
 
 app.post('/api/analyze-speech', upload.single('audio'), async (req, res) => {
@@ -70,9 +82,8 @@ app.post('/api/analyze-speech', upload.single('audio'), async (req, res) => {
 
         try {
             // Create pronunciation assessment config
-            const referenceText = "This is a test"; // You can make this dynamic
             const pronunciationConfig = new sdk.PronunciationAssessmentConfig(
-                referenceText,
+                currentReferenceText,
                 sdk.PronunciationAssessmentGradingSystem.HundredMark,
                 sdk.PronunciationAssessmentGranularity.Word,
                 true
