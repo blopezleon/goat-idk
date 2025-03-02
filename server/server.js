@@ -194,7 +194,7 @@ app.post('/api/analyze-speech', upload.single('audio'), async (req, res) => {
                         2. Provide a simple exercise to practice the sound
                         3. Suggest 2-3 simple practice words
                         
-                        Format the response in clear, simple bullet points. Make sure that it is formated in a way which is easy to read and not in html format.`;
+                        Format the response in clear, simple bullet points. Make sure that it is formated in html format.`;
 
                     console.log('Sending prompt to OpenAI:', aiPrompt);
 

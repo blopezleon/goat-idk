@@ -220,92 +220,24 @@
                                .then(results => {
                                    console.log('Received data from server:', JSON.stringify(results, null, 2));
                                    
-                                   // Create a colored transcription based on phoneme accuracy
-                                   let coloredTranscription = '';
+                                   // Display transcription
+                                   transcriptionDiv.textContent = results.transcription || 'No transcription';
+
+                                   // Create phoneme analysis display
+                                   let analysisHtml = '<h3>Phoneme Analysis</h3>';
+                                   
                                    if (results.phonemes && results.phonemes.length > 0) {
-                                       // First, create a mapping of word positions and their phonemes
-                                       const wordMap = new Map();
-                                       let currentPosition = 0;
+                                       analysisHtml += '<div style="display: flex; flex-direction: column; gap: 1.5rem; padding: 1rem;">';
                                        
-                                       results.transcription.split(' ').forEach(word => {
-                                           const wordPhonemes = results.phonemes.filter(p => p.fromWord.toLowerCase() === word.toLowerCase());
-                                           wordMap.set(currentPosition, {
-                                               word,
-                                               phonemes: wordPhonemes
-                                           });
-                                           currentPosition += word.length + 1; // +1 for space
-                                       });
-
-                                       // Now create the colored text
-                                       let html = '';
-                                       wordMap.forEach((data, position) => {
-                                           const { word, phonemes } = data;
-                                           
-                                           // Create letter-by-letter coloring
-                                           let wordHtml = '';
-                                           let letterIndex = 0;
-                                           
-                                           // Helper function to get phoneme score for a letter position
-                                           const getPhonemeScoreForLetter = (letter, position) => {
-                                               // Find the phoneme that corresponds to this letter position
-                                               // This is a simplified mapping - you might need to adjust based on your needs
-                                               const phoneme = phonemes[Math.min(position, phonemes.length - 1)];
-                                               return phoneme ? phoneme.accuracyScore : 100;
-                                           };
-
-                                           // Color each letter
-                                           while (letterIndex < word.length) {
-                                               const score = getPhonemeScoreForLetter(word[letterIndex], letterIndex);
-                                               const color = getScoreColor(score);
-                                               
-                                               wordHtml += `<span style="color: ${color}; font-weight: 500;">${word[letterIndex]}</span>`;
-                                               letterIndex++;
-                                           }
-                                           
-                                           html += wordHtml + ' ';
-                                       });
-
-                                       coloredTranscription = `
-                                           <div style="
-                                               font-size: 1.5em;
-                                               line-height: 1.5;
-                                               padding: 1rem;
-                                               background: white;
-                                               border-radius: 8px;
-                                               box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-                                               margin-bottom: 1rem;">
-                                               ${html}
-                                           </div>`;
-                                   } else {
-                                       coloredTranscription = `
-                                           <div style="
-                                               font-size: 1.5em;
-                                               padding: 1rem;
-                                               color: #666;">
-                                               ${results.transcription || 'No transcription available'}
-                                           </div>`;
-                                   }
-
-                                   // Update the transcription div with the colored version
-                                   transcriptionDiv.innerHTML = coloredTranscription;
-
-                                   // Group phonemes by word
-                                   const phonemesByWord = {};
-                                   if (results.phonemes && results.phonemes.length > 0) {
+                                       // Group phonemes by word
+                                       const phonemesByWord = {};
                                        results.phonemes.forEach(phoneme => {
                                            if (!phonemesByWord[phoneme.fromWord]) {
                                                phonemesByWord[phoneme.fromWord] = [];
                                            }
                                            phonemesByWord[phoneme.fromWord].push(phoneme);
                                        });
-                                   }
 
-                                   // Create phoneme analysis display
-                                   let analysisHtml = '<h3>Phoneme Analysis</h3>';
-                                   
-                                   if (Object.keys(phonemesByWord).length > 0) {
-                                       analysisHtml += '<div style="display: flex; flex-direction: column; gap: 1.5rem; padding: 1rem;">';
-                                       
                                        // For each word
                                        Object.entries(phonemesByWord).forEach(([word, phonemes]) => {
                                            analysisHtml += `
@@ -370,6 +302,30 @@
                                                <div style="text-align: center; padding: 2rem;">
                                                    <p style="color: #e74c3c; font-size: 1.1em;">No phoneme analysis available.</p>
                                                    <p>Please try speaking more clearly or check your microphone.</p>
+                                               </div>`;
+                                       }
+
+                                       // Add AI Feedback section
+                                       if (results.aiFeedback) {
+                                           analysisHtml += `
+                                               <div style="
+                                                   margin-top: 2rem;
+                                                   background: white;
+                                                   border-radius: 8px;
+                                                   padding: 1.5rem;
+                                                   box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                                                   <h3 style="
+                                                       margin: 0 0 1rem 0;
+                                                       color: #2c3e50;
+                                                       font-size: 1.3em;">
+                                                       🤖 AI Speech Therapist Feedback
+                                                   </h3>
+                                                   <div style="
+                                                       white-space: pre-line;
+                                                       line-height: 1.6;
+                                                       color: #34495e;">
+                                                       ${results.aiFeedback}
+                                                   </div>
                                                </div>`;
                                        }
                                        
