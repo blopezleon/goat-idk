@@ -222,30 +222,76 @@
                                    
                                    // Display transcription
                                    transcriptionDiv.textContent = results.transcription || 'No transcription';
+
+                                   // Create word-by-word analysis display
+                                   let wordAnalysisHtml = '<h3>Word-by-Word Analysis</h3>';
+                                   wordAnalysisHtml += '<div class="word-analysis">';
                                    
-                                   // Display detailed scores
-                                   let feedbackHtml = '<h3>Overall Scores:</h3>';
-                                   feedbackHtml += `<p>Pronunciation: ${results.overallScore.PronScore}</p>`;
-                                   feedbackHtml += `<p>Accuracy: ${results.overallScore.AccuracyScore}</p>`;
-                                   feedbackHtml += `<p>Fluency: ${results.overallScore.FluencyScore}</p>`;
-                                   feedbackHtml += `<p>Completeness: ${results.overallScore.CompletenessScore}</p>`;
+                                   if (results.wordAnalysis && results.wordAnalysis.length > 0) {
+                                       results.wordAnalysis.forEach(word => {
+                                           const accuracyScore = word.accuracyScore || 0;
+                                           const pronunciationScore = word.pronunciation?.pronunciationScore || 0;
+                                           const fluencyScore = word.pronunciation?.fluencyScore || 0;
+                                           const completenessScore = word.pronunciation?.completenessScore || 0;
+                                           
+                                           const accuracyColor = getScoreColor(accuracyScore);
+                                           const pronunciationColor = getScoreColor(pronunciationScore);
+                                           
+                                           wordAnalysisHtml += `
+                                               <div class="word-card" style="
+                                                   border: 1px solid #ddd;
+                                                   border-radius: 8px;
+                                                   padding: 1rem;
+                                                   margin: 0.5rem 0;
+                                                   background: white;
+                                                   box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                                                   <h4 style="margin: 0 0 0.5rem 0; font-size: 1.2em;">${word.word || 'Unknown Word'}</h4>
+                                                   <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem;">
+                                                       <div>
+                                                           <strong>Accuracy:</strong> 
+                                                           <span style="color: ${accuracyColor}; font-size: 1.1em; font-weight: bold;">
+                                                               ${accuracyScore.toFixed(1)}%
+                                                           </span>
+                                                           ${accuracyScore < 60 ? '<br><small style="color: #e74c3c;">(Needs improvement)</small>' : ''}
+                                                       </div>
+                                                       <div>
+                                                           <strong>Pronunciation:</strong> 
+                                                           <span style="color: ${pronunciationColor}; font-size: 1.1em; font-weight: bold;">
+                                                               ${pronunciationScore.toFixed(1)}%
+                                                           </span>
+                                                           ${pronunciationScore < 60 ? '<br><small style="color: #e74c3c;">(Needs improvement)</small>' : ''}
+                                                       </div>
+                                                       <div>
+                                                           <strong>Fluency:</strong> 
+                                                           <span style="color: ${getScoreColor(fluencyScore)}; font-size: 1.1em; font-weight: bold;">
+                                                               ${fluencyScore.toFixed(1)}%
+                                                           </span>
+                                                           ${fluencyScore < 60 ? '<br><small style="color: #e74c3c;">(Needs improvement)</small>' : ''}
+                                                       </div>
+                                                       <div>
+                                                           <strong>Completeness:</strong> 
+                                                           <span style="color: ${getScoreColor(completenessScore)}; font-size: 1.1em; font-weight: bold;">
+                                                               ${completenessScore.toFixed(1)}%
+                                                           </span>
+                                                           ${completenessScore < 60 ? '<br><small style="color: #e74c3c;">(Needs improvement)</small>' : ''}
+                                                       </div>
+                                                   </div>
+                                                   ${word.errorType && word.errorType !== 'None' ? 
+                                                       `<div style="margin-top: 0.5rem; color: #e74c3c;">
+                                                           <strong>Error:</strong> ${word.errorType}
+                                                       </div>` : ''}
+                                               </div>`;
+                                       });
+                                   } else {
+                                       wordAnalysisHtml += `
+                                           <div style="text-align: center; padding: 2rem;">
+                                               <p style="color: #e74c3c; font-size: 1.1em;">No word analysis available.</p>
+                                               <p>Please try speaking more clearly or check your microphone.</p>
+                                           </div>`;
+                                   }
                                    
-                                   feedbackHtml += '<h3>Word-by-Word Scores:</h3>';
-                                   feedbackHtml += '<table border="1"><tr><th>Word</th><th>Pronunciation</th><th>Accuracy</th><th>Fluency</th><th>Completeness</th><th>Prosody</th></tr>';
-                                   
-                                   results.wordScores.forEach(score => {
-                                       feedbackHtml += `<tr>
-                                           <td>${score.word}</td>
-                                           <td>${score.pronunciation}</td>
-                                           <td>${score.accuracy}</td>
-                                           <td>${score.fluency}</td>
-                                           <td>${score.completeness}</td>
-                                           <td>${score.prosody}</td>
-                                       </tr>`;
-                                   });
-                                   
-                                   feedbackHtml += '</table>';
-                                   feedbackDiv.innerHTML = feedbackHtml;
+                                   wordAnalysisHtml += '</div>';
+                                   feedbackDiv.innerHTML = wordAnalysisHtml;
                                    
                                    status.textContent = 'Analysis complete';
 
@@ -368,6 +414,15 @@
            for (let i = 0; i < string.length; i++) {
                view.setUint8(offset + i, string.charCodeAt(i));
            }
+       }
+
+       // Add this helper function for color coding
+       function getScoreColor(score) {
+           if (score >= 90) return '#27ae60';  // Green for excellent
+           if (score >= 75) return '#2ecc71';  // Light green for good
+           if (score >= 60) return '#f1c40f';  // Yellow for moderate
+           if (score >= 40) return '#e67e22';  // Orange for needs improvement
+           return '#e74c3c';                   // Red for poor
        }
    </script>
 </body>

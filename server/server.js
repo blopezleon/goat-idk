@@ -94,9 +94,20 @@ app.post('/api/analyze-speech', upload.single('audio'), async (req, res) => {
                 fs.readFileSync(req.file.path)
             );
 
+            // Configure speech settings with more detailed options
+            speechConfig.enableAudioLogging();
+            speechConfig.setProfanity(sdk.ProfanityOption.Raw);
+            speechConfig.setServiceProperty('wordLevelTimings', 'true', sdk.ServicePropertyChannel.UriQueryParameter);
+            speechConfig.setProperty(sdk.PropertyId.SpeechServiceResponse_PostProcessingOption, 'detailed');
+
             // Create speech recognizer with pronunciation assessment
             const recognizer = new sdk.SpeechRecognizer(speechConfig, audioConfig);
             pronunciationConfig.applyTo(recognizer);
+
+            // Enable more detailed recognition
+            recognizer.recognizing = (s, e) => {
+                console.log(`RECOGNIZING: Text=${e.result.text}`);
+            };
 
             // Perform recognition and assessment
             const result = await new Promise((resolve, reject) => {
@@ -105,9 +116,25 @@ app.post('/api/analyze-speech', upload.single('audio'), async (req, res) => {
                 recognizer.recognized = (s, e) => {
                     if (e.result.text) {
                         const pronunciation = sdk.PronunciationAssessmentResult.fromResult(e.result);
+                        const words = pronunciation.detailResult?.Words || [];
+                        console.log('Pronunciation details:', JSON.stringify(pronunciation.detailResult, null, 2));
+                        
                         assessmentResults.push({
                             text: e.result.text,
-                            pronunciation: pronunciation
+                            pronunciation: pronunciation,
+                            words: words.map(word => ({
+                                Word: word.Word,
+                                AccuracyScore: word.PronunciationAssessment?.AccuracyScore,
+                                ErrorType: word.PronunciationAssessment?.ErrorType || 'None',
+                                Duration: word.Duration,
+                                Offset: word.Offset,
+                                PronunciationAssessment: {
+                                    AccuracyScore: word.PronunciationAssessment?.AccuracyScore || 0,
+                                    CompletenessScore: word.PronunciationAssessment?.CompletenessScore || 0,
+                                    FluencyScore: word.PronunciationAssessment?.FluencyScore || 0,
+                                    PronunciationScore: word.PronunciationAssessment?.PronunciationScore || 0
+                                }
+                            }))
                         });
                     }
                 };
@@ -124,15 +151,23 @@ app.post('/api/analyze-speech', upload.single('audio'), async (req, res) => {
 
             // Process results
             const transcription = result.result.text;
-            const wordScores = result.assessmentResults.map(assessment => {
-                return {
-                    word: assessment.text,
-                    pronunciation: assessment.pronunciation.pronunciationScore,
-                    accuracy: assessment.pronunciation.accuracyScore,
-                    fluency: assessment.pronunciation.fluencyScore,
-                    completeness: assessment.pronunciation.completenessScore
-                };
-            });
+            
+            // Process word-by-word results with better error handling
+            const wordAnalysis = result.assessmentResults[0]?.words?.map(word => ({
+                word: word.Word,
+                accuracyScore: word.AccuracyScore || 0,
+                errorType: word.ErrorType || 'None',
+                duration: word.Duration,
+                offset: word.Offset,
+                pronunciation: {
+                    accuracyScore: word.PronunciationAssessment?.AccuracyScore || 0,
+                    completenessScore: word.PronunciationAssessment?.CompletenessScore || 0,
+                    fluencyScore: word.PronunciationAssessment?.FluencyScore || 0,
+                    pronunciationScore: word.PronunciationAssessment?.PronunciationScore || 0
+                }
+            })) || [];
+
+            console.log('Word Analysis:', JSON.stringify(wordAnalysis, null, 2));
 
             // Calculate overall scores
             const overallScore = {
@@ -145,13 +180,13 @@ app.post('/api/analyze-speech', upload.single('audio'), async (req, res) => {
             console.log('Processed results:', {
                 transcription,
                 overallScore,
-                wordScores
+                wordAnalysis
             });
 
             res.json({
                 transcription,
                 overallScore,
-                wordScores,
+                wordAnalysis,
                 feedback: 'Speech analysis completed'
             });
 
