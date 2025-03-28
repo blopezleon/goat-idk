@@ -1,1021 +1,865 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-   <meta charset="UTF-8">
-   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-   <title>Speech Analysis - AI Speech Therapist</title>
-   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
-   <style>
-       body {
-           font-family: 'Poppins', sans-serif;
-           margin: 0;
-           padding: 0;
-           background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-           min-height: 100vh;
-       }
-
-
-       .container {
-           max-width: 800px;
-           margin: 0 auto;
-           padding: 2rem;
-       }
-
-
-       .analysis-section {
-           background: white;
-           padding: 2rem;
-           border-radius: 10px;
-           box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-           margin-bottom: 2rem;
-       }
-
-
-       .record-button {
-           display: inline-block;
-           padding: 1rem 2rem;
-           background-color: #3498db;
-           color: white;
-           border: none;
-           border-radius: 30px;
-           font-weight: 500;
-           cursor: pointer;
-           transition: all 0.3s ease;
-       }
-
-
-       .record-button:hover {
-           background-color: #2980b9;
-       }
-
-
-       .record-button.recording {
-           background-color: #e74c3c;
-       }
-
-
-       #transcription, #feedback {
-           margin-top: 1rem;
-           padding: 1rem;
-           background: #f8f9fa;
-           border-radius: 5px;
-           min-height: 100px;
-       }
-
-
-       .status {
-           color: #7f8c8d;
-           margin-top: 0.5rem;
-       }
-
-
-       .button-group {
-           display: flex;
-           gap: 1rem;
-           margin-bottom: 1rem;
-       }
-
-
-       .play-button {
-           display: inline-block;
-           padding: 1rem 2rem;
-           background-color: #27ae60;
-           color: white;
-           border: none;
-           border-radius: 30px;
-           font-weight: 500;
-           cursor: pointer;
-           transition: all 0.3s ease;
-       }
-
-
-       .play-button:hover {
-           background-color: #219a52;
-       }
-
-
-       .play-button:disabled {
-           background-color: #bdc3c7;
-           cursor: not-allowed;
-       }
-
-
-       .audio-player {
-           margin-top: 1rem;
-           width: 100%;
-       }
-
-       .audio-button {
-           display: inline-flex;
-           align-items: center;
-           gap: 0.5rem;
-           padding: 0.5rem 1rem;
-           background-color: #3498db;
-           color: white;
-           border: none;
-           border-radius: 15px;
-           font-size: 0.9em;
-           cursor: pointer;
-           transition: all 0.2s ease;
-       }
-
-       .audio-button:hover {
-           background-color: #2980b9;
-       }
-
-       .audio-button i {
-           font-size: 1.2em;
-       }
-
-       .phoneme-card {
-           display: flex;
-           flex-direction: column;
-           background: #fff;
-           border-radius: 8px;
-           overflow: hidden;
-           width: 200px;
-       }
-
-       .mouth-diagram {
-           padding: 1.5rem;
-           background: #f8f9fa;
-           text-align: center;
-           width: 140px;
-           height: 140px;
-           margin: 0 auto;
-           position: relative;
-           border-radius: 12px;
-       }
-
-       .mouth-container {
-           position: relative;
-           width: 100px;
-           height: 60px;
-           margin: 30px auto 0;
-       }
-
-       .mouth {
-           position: absolute;
-           width: 100%;
-           height: 100%;
-           left: 0;
-           top: 0;
-       }
-
-       .lips {
-           position: absolute;
-           width: 100%;
-           height: 100%;
-           border: 4px solid #d63031;
-           border-radius: 50% / 100%;
-           border-top: 0;
-           background: #ff7675;
-           overflow: hidden;
-           transition: all 0.3s ease;
-       }
-
-       .teeth-top, .teeth-bottom {
-           position: absolute;
-           left: 50%;
-           transform: translateX(-50%);
-           width: 80%;
-           height: 15px;
-           background: white;
-           border-radius: 0 0 8px 8px;
-           box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-       }
-
-       .teeth-top {
-           top: 0;
-           border-radius: 8px 8px 0 0;
-       }
-
-       .teeth-bottom {
-           bottom: 0;
-           border-radius: 0 0 8px 8px;
-       }
-
-       .tongue {
-           position: absolute;
-           bottom: 5px;
-           left: 50%;
-           transform: translateX(-50%);
-           width: 60%;
-           height: 40%;
-           background: #e17055;
-           border-radius: 50% 50% 0 0;
-           transition: all 0.3s ease;
-       }
-
-       /* Mouth positions */
-       .mouth-ah .lips {
-           height: 150%;
-           border-radius: 50% / 100%;
-       }
-       .mouth-ah .tongue {
-           height: 50%;
-           transform: translateX(-50%) translateY(20%);
-       }
-       .mouth-ah .teeth-top {
-           transform: translateX(-50%) translateY(-5px);
-       }
-       .mouth-ah .teeth-bottom {
-           transform: translateX(-50%) translateY(5px);
-       }
-
-       .mouth-ee .lips {
-           height: 40%;
-           width: 120%;
-           left: -10%;
-           border-radius: 30% / 100%;
-       }
-       .mouth-ee .tongue {
-           height: 30%;
-           width: 80%;
-           bottom: 2px;
-       }
-       .mouth-ee .teeth-top, .mouth-ee .teeth-bottom {
-           width: 90%;
-       }
-
-       .mouth-oo .lips {
-           height: 60%;
-           width: 60%;
-           left: 20%;
-           border-radius: 50%;
-       }
-       .mouth-oo .tongue {
-           height: 40%;
-           width: 50%;
-           border-radius: 40%;
-       }
-       .mouth-oo .teeth-top, .mouth-oo .teeth-bottom {
-           width: 50%;
-       }
-
-       .mouth-s .lips {
-           height: 30%;
-           border-radius: 40% / 100%;
-       }
-       .mouth-s .tongue {
-           height: 20%;
-           width: 70%;
-           transform: translateX(-50%) translateY(-50%);
-       }
-       .mouth-s .teeth-top, .mouth-s .teeth-bottom {
-           height: 12px;
-       }
-
-       .mouth-th .lips {
-           height: 40%;
-       }
-       .mouth-th .tongue {
-           height: 30%;
-           transform: translateX(-50%) translateY(-30%);
-           border-radius: 20% 20% 0 0;
-       }
-
-       .mouth-r .lips {
-           height: 50%;
-           border-radius: 40% / 100%;
-       }
-       .mouth-r .tongue {
-           height: 45%;
-           width: 55%;
-           transform: translateX(-50%) translateY(-20%);
-           border-radius: 30% 30% 0 0;
-       }
-
-       .mouth-l .lips {
-           height: 45%;
-       }
-       .mouth-l .tongue {
-           height: 40%;
-           transform: translateX(-50%) translateY(-25%) rotate(-5deg);
-       }
-
-       .mouth-k .lips {
-           height: 35%;
-       }
-       .mouth-k .tongue {
-           height: 50%;
-           transform: translateX(-50%) translateY(-40%) rotate(10deg);
-           border-radius: 30% 30% 0 0;
-       }
-
-       .mouth-f .lips {
-           height: 25%;
-       }
-       .mouth-f .teeth-top {
-           transform: translateX(-50%) translateY(2px);
-       }
-       .mouth-f .teeth-bottom {
-           transform: translateX(-50%) translateY(-4px);
-       }
-
-       .mouth-m .lips {
-           height: 20%;
-           border-bottom: 4px solid #d63031;
-       }
-       .mouth-m .tongue {
-           display: none;
-       }
-       .mouth-m .teeth-top, .mouth-m .teeth-bottom {
-           display: none;
-       }
-
-       .mouth-n .lips {
-           height: 35%;
-       }
-       .mouth-n .tongue {
-           height: 45%;
-           transform: translateX(-50%) translateY(-35%);
-           border-radius: 40% 40% 0 0;
-       }
-
-       /* Add a face outline to make it more realistic */
-       .face-outline {
-           position: absolute;
-           width: 140px;
-           height: 140px;
-           border-radius: 50%;
-           border: 2px solid #dfe6e9;
-           top: 50%;
-           left: 50%;
-           transform: translate(-50%, -50%);
-           pointer-events: none;
-       }
-
-       /* Add subtle animations */
-       @keyframes breathe {
-           0%, 100% { transform: scale(1); }
-           50% { transform: scale(1.02); }
-       }
-
-       .mouth-container {
-           animation: breathe 3s infinite ease-in-out;
-       }
-   </style>
-   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proficiency Test - FluentForm</title>
+    <link rel="stylesheet" href="./styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css">
 </head>
-<body>
-   <div class="container">
-       <div class="analysis-section">
-           <h2>Speech Proficiency Test</h2>
-           
-           <div style="margin-bottom: 2rem;">
-               <h3>Instructions</h3>
-               <p style="line-height: 1.6; color: #34495e;">
-                   This is a quick test to identify which speech sounds you might want to practice.
-                   Please read the following sentence clearly and naturally. 
-                   This sentence contains most English sounds we want to test.
-               </p>
-           </div>
+<body data-auto-init="true" data-active-page="proficiency">
+    <!-- Accessibility skip link -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
 
-           <div id="testSentence" style="
-               background: #f8f9fa;
-               padding: 2rem;
-               border-radius: 10px;
-               font-size: 1.5em;
-               line-height: 1.6;
-               margin-bottom: 2rem;
-               text-align: center;
-               color: #2c3e50;
-               box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);">
-               <div style="margin-bottom: 1rem;">
-                   The quick brown fox jumped over the lazy dogs while six big zebras watched quietly through the bushes.
-               </div>
-               <button class="audio-button" onclick="speakText('The quick brown fox jumped over the lazy dogs while six big zebras watched quietly through the bushes.')">
-                   <i class="fas fa-volume-up"></i> Listen to Correct Pronunciation
-               </button>
-           </div>
+    <div class="page-wrapper">
+        <!-- Header will be injected by components.js -->
+        
+        <main id="main-content" class="main-content">
+            <div class="container">
+                <section class="welcome-section fade-in">
+                    <h1>Speech Proficiency Test</h1>
+                    <p class="subtitle">Let's evaluate your speech to identify areas for improvement</p>
+                </section>
 
-           <div class="button-group" style="margin-top: 2rem;">
-               <button id="recordButton" class="record-button">Start Recording</button>
-               <button id="playButton" class="play-button" disabled>Play Recording</button>
-           </div>
-           <p class="status" id="status">Click to start recording</p>
-          
-           <audio id="audioPlayback" class="audio-player" controls style="display: none;"></audio>
-          
-           <h3>Your Speech</h3>
-           <div id="transcription">Your pronunciation will appear here...</div>
-          
-           <h3>Analysis Results</h3>
-           <div id="feedback">Results will appear here...</div>
-           <div id="nextStepSection" style="display: none; margin-top: 2rem;">
-               <button id="practiceButton" onclick="startPractice()" style="
-                   display: inline-block;
-                   padding: 1rem 2rem;
-                   background-color: #9b59b6;
-                   color: white;
-                   border: none;
-                   border-radius: 30px;
-                   font-weight: 500;
-                   cursor: pointer;
-                   transition: all 0.3s ease;
-                   font-size: 1.1em;
-                   text-decoration: none;">
-                   Start Personalized Practice
-               </button>
-           </div>
-       </div>
-   </div>
+                <div class="card">
+                    <div class="card-header">
+                        <h2><i class="bi bi-mic-fill"></i> Proficiency Assessment</h2>
+                    </div>
+                    
+                    <div class="card-content">
+                        <div id="instructions" class="instructions-panel">
+                            <h3><i class="bi bi-info-circle"></i> Instructions</h3>
+                            <p>This assessment will help identify which speech sounds you might have difficulty with. Follow these steps:</p>
+                            
+                            <div class="steps-container">
+                                <div class="step">
+                                    <div class="step-number">1</div>
+                                    <div class="step-content">
+                                        <h4>Read aloud each prompt</h4>
+                                        <p>You'll be shown a series of sentences designed to test different speech sounds.</p>
+                                    </div>
+                                </div>
+                                <div class="step">
+                                    <div class="step-number">2</div>
+                                    <div class="step-content">
+                                        <h4>Record your speech</h4>
+                                        <p>Use the recording button to capture your pronunciation.</p>
+                                    </div>
+                                </div>
+                                <div class="step">
+                                    <div class="step-number">3</div>
+                                    <div class="step-content">
+                                        <h4>Review your results</h4>
+                                        <p>After each recording, you'll get feedback on your pronunciation.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <button id="startTestBtn" class="btn btn-primary btn-large">
+                                <i class="bi bi-play-fill btn-icon"></i> Start Assessment
+                            </button>
+                        </div>
 
+                        <div id="testInterface" style="display: none;">
+                            <div class="progress-indicator">
+                                <div class="progress-label">Progress</div>
+                                <div class="progress-container">
+                                    <div id="progressBar" class="progress-bar progress-bar-primary" style="width: 0%"></div>
+                                </div>
+                                <div id="progressText">Prompt 1 of 5</div>
+                            </div>
 
-   <script>
-       let mediaRecorder;
-       let audioChunks = [];
-       let audioUrl;
-       let problemSounds = [];  // Add this at the top with other variables
-       
-       const testSentence = "The quick brown fox jumped over the lazy dogs while six big zebras watched quietly through the bushes.";
-       
-       // Set the reference text as soon as the page loads
-       fetch('http://127.0.0.1:3000/api/set-reference', {
-           method: 'POST',
-           headers: {
-               'Content-Type': 'application/json',
-           },
-           body: JSON.stringify({ referenceText: testSentence })
-       })
-       .catch(error => console.error('Error setting reference text:', error));
-      
-       const recordButton = document.getElementById('recordButton');
-       const playButton = document.getElementById('playButton');
-       const status = document.getElementById('status');
-       const audioPlayback = document.getElementById('audioPlayback');
-       const transcriptionDiv = document.getElementById('transcription');
-       const feedbackDiv = document.getElementById('feedback');
+                            <div class="exercise-section">
+                                <h3>Please read this sentence aloud:</h3>
+                                <div id="promptDisplay" class="exercise-prompt">
+                                    Loading prompts...
+                                </div>
+                                
+                                <div class="exercise-controls">
+                                    <button id="recordButton" class="btn btn-accent">
+                                        <i class="bi bi-record-circle btn-icon"></i> Start Recording
+                                    </button>
+                                    <button id="playButton" class="btn btn-secondary" disabled>
+                                        <i class="bi bi-play-fill btn-icon"></i> Play Recording
+                                    </button>
+                                    <button id="nextButton" class="btn btn-primary" disabled>
+                                        <i class="bi bi-arrow-right btn-icon"></i> Next
+                                    </button>
+                                </div>
+                                
+                                <p class="status" id="status">Click to start recording</p>
+                                
+                                <audio id="audioPlayback" class="audio-player" controls style="display: none;"></audio>
+                            </div>
+                            
+                            <div class="analysis-section">
+                                <h3><i class="bi bi-chat-text"></i> Your Speech</h3>
+                                <div id="transcription" class="transcription-display">Transcription will appear here...</div>
+                                
+                                <h3><i class="bi bi-graph-up"></i> Analysis</h3>
+                                <div id="analysis" class="analysis-display">Analysis will appear here...</div>
+                            </div>
+                        </div>
 
+                        <div id="resultsSummary" style="display: none;">
+                            <h3><i class="bi bi-clipboard-check"></i> Assessment Complete</h3>
+                            
+                            <div class="summary-card">
+                                <div class="summary-header">
+                                    <h4>Your Speech Profile</h4>
+                                </div>
+                                <div class="summary-content">
+                                    <div id="overallScoreContainer" class="overall-score-container">
+                                        <div class="score-circle">
+                                            <span id="overallScore">--</span>
+                                            <span class="percent">%</span>
+                                        </div>
+                                        <div class="score-label">Overall Score</div>
+                                    </div>
+                                    
+                                    <h4>Phoneme Proficiency</h4>
+                                    <div id="phonemeGrid" class="phoneme-grid">
+                                        <!-- Phoneme cards will be inserted here -->
+                                    </div>
+                                    
+                                    <h4>Focus Areas for Improvement</h4>
+                                    <div id="focusAreas" class="focus-areas">
+                                        <!-- Focus areas will be inserted here -->
+                                    </div>
+                                    
+                                    <div id="recommendationsContainer" class="recommendations-container">
+                                        <h4>Recommendations</h4>
+                                        <p id="recommendationsText"></p>
+                                        
+                                        <div class="recommended-exercises">
+                                            <h5>Recommended Exercises</h5>
+                                            <div id="exerciseRecommendations" class="recommendations-grid">
+                                                <!-- Exercise cards will be inserted here -->
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="summary-footer">
+                                    <a href="practice.html" class="btn btn-primary">
+                                        <i class="bi bi-mic-fill btn-icon"></i> Start Practicing
+                                    </a>
+                                    <a href="index.html" class="btn btn-secondary">
+                                        <i class="bi bi-house-fill btn-icon"></i> Back to Dashboard
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
 
-       recordButton.addEventListener('click', async () => {
-           if (mediaRecorder && mediaRecorder.state === 'recording') {
-               mediaRecorder.stop();
-               recordButton.textContent = 'Start Recording';
-               recordButton.classList.remove('recording');
-           } else {
-               try {
-                   const stream = await navigator.mediaDevices.getUserMedia({
-                       audio: {
-                           channelCount: 1,
-                           sampleRate: 16000
-                       }
-                   });
-                   
-                   audioChunks = [];
-                   
-                   mediaRecorder = new MediaRecorder(stream, {
-                       mimeType: 'audio/webm'  // Record in WebM format first
-                   });
-                   
-                   mediaRecorder.ondataavailable = (event) => {
-                       if (event.data.size > 0) {
-                           audioChunks.push(event.data);
-                           console.log('Chunk received:', event.data.size);
-                       }
-                   };
+    <!-- 3D model container for visualization -->
+    <div id="mouthModelContainer" class="model-container-fixed">
+        <button id="closeModelBtn" class="close-model-btn">
+            <i class="bi bi-x-lg"></i>
+        </button>
+        <div id="modelContent" style="height: 100%; width: 100%"></div>
+    </div>
 
-                   mediaRecorder.onstop = () => {
-                       // Create the WebM blob
-                       const webmBlob = new Blob(audioChunks, { type: 'audio/webm' });
-                       console.log('WebM blob created, size:', webmBlob.size);
-                       
-                       // Create URL for playback
-                       if (audioUrl) {
-                           URL.revokeObjectURL(audioUrl);
-                       }
-                       audioUrl = URL.createObjectURL(webmBlob);
-                       
-                       // Set up audio playback
-                       audioPlayback.src = audioUrl;
-                       audioPlayback.style.display = 'block';
-                       playButton.disabled = false;
-
-                       // Convert WebM to WAV
-                       const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                       const fileReader = new FileReader();
-
-                       fileReader.onloadend = () => {
-                           const arrayBuffer = fileReader.result;
-                           audioContext.decodeAudioData(arrayBuffer, (audioBuffer) => {
-                               // Convert to WAV
-                               const wavBuffer = audioBufferToWav(audioBuffer);
-                               const wavBlob = new Blob([wavBuffer], { type: 'audio/wav' });
-                               
-                               // Send WAV to server
-                               const formData = new FormData();
-                               formData.append('audio', wavBlob, 'recording.wav');
-                               
-                               fetch('http://127.0.0.1:3000/api/analyze-speech', {
-                                   method: 'POST',
-                                   body: formData
-                               })
-                               .then(response => response.json())
-                               .then(results => {
-                                   console.log('Received data from server:', JSON.stringify(results, null, 2));
-                                   
-                                   // Create colored transcription display
-                                   let transcriptionHtml = '<div style="font-size: 1.5em; line-height: 1.5; letter-spacing: 1px;">';
-                                   
-                                   // Create a map of letter positions to phonemes
-                                   const letterToPhoneme = new Map();
-                                   let currentPosition = 0;
-                                   
-                                   // First, normalize the phoneme data
-                                   const normalizedPhonemes = results.phonemes.map(p => ({
-                                       ...p,
-                                       phoneme: p.phoneme.toLowerCase(),
-                                       fromWord: p.fromWord.toLowerCase()
-                                   }));
-
-                                   // Enhanced phoneme-to-letter mappings
-                                   const phonemeMap = {
-                                       // Vowels
-                                       'iy': 'i|y|ee|ea|e',
-                                       'ih': 'i|y|e',
-                                       'eh': 'e|ea|a',
-                                       'ae': 'a|ai',
-                                       'ah': 'u|o|a',
-                                       'uw': 'oo|u|o',
-                                       'uh': 'oo|u|o',
-                                       'ao': 'o|au|aw|a',
-                                       'aa': 'a|o',
-                                       'ey': 'a|ay|ai|ei',
-                                       'ay': 'i|y|ie',
-                                       'oy': 'oi|oy',
-                                       'ow': 'o|ow',
-                                       'aw': 'ow|ou|au',
-                                       'ax': 'a|e|i|o|u', // Schwa sound
-                                       // Consonants
-                                       'p': 'p',
-                                       'b': 'b',
-                                       't': 't',
-                                       'd': 'd',
-                                       'k': 'k|c|ck|ch',
-                                       'g': 'g',
-                                       'ch': 'ch|tch',
-                                       'jh': 'j|g|dge',
-                                       'f': 'f|ph|gh',
-                                       'v': 'v',
-                                       'th': 'th',
-                                       'dh': 'th',
-                                       's': 's|c|ce|ss',
-                                       'z': 'z|s|ss',
-                                       'sh': 'sh|ti|ci',
-                                       'zh': 's|si',
-                                       'hh': 'h',
-                                       'm': 'm|mm',
-                                       'n': 'n|nn|kn',
-                                       'ng': 'ng',
-                                       'l': 'l|ll',
-                                       'r': 'r|rr|wr',
-                                       'y': 'y|i',
-                                       'w': 'w|wh',
-                                       'dx': 't|tt|dd', // Flap T
-                                       'er': 'er|ir|ur|or|ar'
-                                   };
-
-                                   results.transcription.split(' ').forEach(word => {
-                                       const wordLower = word.toLowerCase();
-                                       const wordPhonemes = normalizedPhonemes.filter(p => p.fromWord === wordLower);
-                                       
-                                       // Map each letter to its corresponding phoneme
-                                       word.split('').forEach(letter => {
-                                           const letterLower = letter.toLowerCase();
-                                           let matchFound = false;
-                                           
-                                           // First try: exact phoneme match
-                                           for (const phoneme of wordPhonemes) {
-                                               if (phoneme.phoneme === letterLower) {
-                                                   letterToPhoneme.set(currentPosition, phoneme);
-                                                   matchFound = true;
-                                                   break;
-                                               }
-                                           }
-                                           
-                                           // Second try: phoneme mapping
-                                           if (!matchFound) {
-                                               for (const phoneme of wordPhonemes) {
-                                                   for (const [phone, letters] of Object.entries(phonemeMap)) {
-                                                       if (phoneme.phoneme.includes(phone) && letters.split('|').includes(letterLower)) {
-                                                           letterToPhoneme.set(currentPosition, phoneme);
-                                                           matchFound = true;
-                                                           break;
-                                                       }
-                                                   }
-                                                   if (matchFound) break;
-                                               }
-                                           }
-                                           
-                                           // Third try: fuzzy match
-                                           if (!matchFound) {
-                                               const bestMatch = wordPhonemes.find(p => 
-                                                   p.phoneme.includes(letterLower) || 
-                                                   letterLower.includes(p.phoneme) ||
-                                                   Object.entries(phonemeMap).some(([phone, letters]) => 
-                                                       p.phoneme.includes(phone) && letters.includes(letterLower)
-                                                   )
-                                               );
-                                               if (bestMatch) {
-                                                   letterToPhoneme.set(currentPosition, bestMatch);
-                                               } else {
-                                                   // Last resort: assign to the closest phoneme in the word
-                                                   if (wordPhonemes.length > 0) {
-                                                       letterToPhoneme.set(currentPosition, wordPhonemes[0]);
-                                                   }
-                                               }
-                                           }
-                                           
-                                           currentPosition++;
-                                       });
-                                       currentPosition++; // Account for space between words
-                                   });
-                                   
-                                   // Color each letter based on its phoneme accuracy
-                                   let position = 0;
-                                   results.transcription.split('').forEach(letter => {
-                                       const phoneme = letterToPhoneme.get(position);
-                                       // Default to perfect score color (green) unless we have a specific lower score
-                                       const color = (phoneme && phoneme.accuracyScore < 90) ? 
-                                           getScoreColor(phoneme.accuracyScore) : 
-                                           '#27ae60';  // Default green for perfect score
-                                       
-                                       if (letter === ' ') {
-                                           transcriptionHtml += ' ';
-                                       } else {
-                                           transcriptionHtml += `<span style="color: ${color}; font-weight: bold;">${letter}</span>`;
-                                       }
-                                       position++;
-                                   });
-                                   
-                                   transcriptionHtml += '</div>';
-                                   transcriptionDiv.innerHTML = transcriptionHtml;
-
-                                   // Modify the feedback section to show problem sounds
-                                   if (results.phonemes && results.phonemes.length > 0) {
-                                       // Group phonemes by accuracy score
-                                       const criticalPhonemes = results.phonemes.filter(p => p.accuracyScore < 40);
-                                       const minorPhonemes = results.phonemes.filter(p => p.accuracyScore >= 40 && p.accuracyScore < 80);
-                                       
-                                       const criticalSounds = [...new Set(criticalPhonemes.map(p => p.phoneme))];
-                                       const minorSounds = [...new Set(minorPhonemes.map(p => p.phoneme))];
-                                       
-                                       // Update the global problemSounds variable
-                                       problemSounds = [...criticalSounds, ...minorSounds];
-
-                                       let analysisHtml = '<div style="padding: 1.5rem; background: white; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">';
-                                       
-                                       if (criticalSounds.length > 0 || minorSounds.length > 0) {
-                                           // Critical sounds section
-                                           if (criticalSounds.length > 0) {
-                                               analysisHtml += `
-                                                   <div style="margin-bottom: 2rem;">
-                                                       <h4 style="color: #c0392b; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid #e74c3c;">
-                                                           Priority Practice Sounds
-                                                       </h4>
-                                                       <div style="display: flex; flex-wrap: wrap; gap: 1rem;">
-                                               `;
-
-                                               criticalSounds.forEach(sound => {
-                                                   const examples = criticalPhonemes
-                                                       .filter(p => p.phoneme === sound)
-                                                       .map(p => p.fromWord)
-                                                       .slice(0, 3);
-                                                   
-                                                   analysisHtml += `
-                                                       <div class="phoneme-card" style="
-                                                           background: #fdf0ed;
-                                                           border: 1px solid #e74c3c;">
-                                                           <div class="phoneme-info">
-                                                               <div style="font-weight: bold; color: #c0392b; margin-bottom: 0.5rem; font-size: 1.2em;">
-                                                                   ${sound}
-                                                               </div>
-                                                               <div style="color: #7f8c8d; font-size: 0.9em; margin-bottom: 1rem;">
-                                                                   Found in: ${examples.join(', ')}
-                                                               </div>
-                                                               <button class="audio-button" onclick="speakText('${examples[0]}')">
-                                                                   <i class="fas fa-volume-up"></i> Listen & Repeat
-                                                               </button>
-                                                           </div>
-                                                           <div class="mouth-diagram">
-                                                               <div class="face-outline"></div>
-                                                               <div class="mouth-container">
-                                                                   <div class="mouth ${getMouthClass(sound)}">
-                                                                       <div class="lips">
-                                                                           <div class="teeth-top"></div>
-                                                                           <div class="tongue"></div>
-                                                                           <div class="teeth-bottom"></div>
-                                                                       </div>
-                                                                   </div>
-                                                               </div>
-                                                           </div>
-                                                           <div style="padding: 1rem; background: #fff3f0;">
-                                                               <h5 style="margin: 0 0 0.5rem 0; color: #c0392b;">How to Make This Sound:</h5>
-                                                               <p style="margin: 0; font-size: 0.9em; color: #7f8c8d;">
-                                                                   ${getPhonemeInstructions(sound)}
-                                                               </p>
-                                                           </div>
-                                                       </div>
-                                                   `;
-                                               });
-
-                                               analysisHtml += '</div></div>';
-                                           }
-
-                                           // Minor improvements section
-                                           if (minorSounds.length > 0) {
-                                               analysisHtml += `
-                                                   <div>
-                                                       <h4 style="color: #f39c12; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid #f1c40f;">
-                                                           Minor Improvements Needed
-                                                       </h4>
-                                                       <div style="display: flex; flex-wrap: wrap; gap: 1rem;">
-                                               `;
-
-                                               minorSounds.forEach(sound => {
-                                                   const examples = minorPhonemes
-                                                       .filter(p => p.phoneme === sound)
-                                                       .map(p => p.fromWord)
-                                                       .slice(0, 3);
-                                                   
-                                                   analysisHtml += `
-                                                       <div class="phoneme-card" style="
-                                                           background: #fef9e7;
-                                                           border: 1px solid #f1c40f;">
-                                                           <div class="phoneme-info">
-                                                               <div style="font-weight: bold; color: #f39c12; margin-bottom: 0.5rem; font-size: 1.2em;">
-                                                                   ${sound}
-                                                               </div>
-                                                               <div style="color: #7f8c8d; font-size: 0.9em; margin-bottom: 1rem;">
-                                                                   Found in: ${examples.join(', ')}
-                                                               </div>
-                                                               <button class="audio-button" onclick="speakText('${examples[0]}')">
-                                                                   <i class="fas fa-volume-up"></i> Listen & Repeat
-                                                               </button>
-                                                           </div>
-                                                           <div class="mouth-diagram">
-                                                               <div class="face-outline"></div>
-                                                               <div class="mouth-container">
-                                                                   <div class="mouth ${getMouthClass(sound)}">
-                                                                       <div class="lips">
-                                                                           <div class="teeth-top"></div>
-                                                                           <div class="tongue"></div>
-                                                                           <div class="teeth-bottom"></div>
-                                                                       </div>
-                                                                   </div>
-                                                               </div>
-                                                           </div>
-                                                           <div style="padding: 1rem; background: #fff3f0;">
-                                                               <h5 style="margin: 0 0 0.5rem 0; color: #f39c12;">How to Make This Sound:</h5>
-                                                               <p style="margin: 0; font-size: 0.9em; color: #7f8c8d;">
-                                                                   ${getPhonemeInstructions(sound)}
-                                                               </p>
-                                                           </div>
-                                                       </div>
-                                                   `;
-                                               });
-
-                                               analysisHtml += '</div></div>';
-                                           }
-                                           
-                                           // Show the next step section and update localStorage
-                                           document.getElementById('nextStepSection').style.display = 'block';
-                                           localStorage.setItem('problemSounds', JSON.stringify(problemSounds));
-                                       } else {
-                                           analysisHtml += `
-                                               <div style="text-align: center; color: #27ae60;">
-                                                   <h4>Excellent Pronunciation!</h4>
-                                                   <p>You pronounced all sounds clearly. Great job!</p>
-                                               </div>
-                                           `;
-                                           // Hide the practice button if no problems found
-                                           document.getElementById('nextStepSection').style.display = 'none';
-                                           localStorage.removeItem('problemSounds');
-                                       }
-
-                                       analysisHtml += '</div>';
-                                       feedbackDiv.innerHTML = analysisHtml;
-                                   }
-
-                                   status.textContent = 'Analysis complete';
-
-                                   // Display raw data
-                                   document.getElementById('rawData').textContent = JSON.stringify(results, null, 2);
-
-                                   // Add practice button handler
-                                   document.getElementById('practiceButton').onclick = () => {
-                                       window.location.href = 'practice.html';
-                                   };
-                               })
-                               .catch(error => {
-                                   console.error('Server error:', error);
-                                   status.textContent = 'Server error: ' + error.message;
-                               });
-                           });
-                       };
-
-                       fileReader.readAsArrayBuffer(webmBlob);
-                   };
-
-                   mediaRecorder.start(100);
-                   recordButton.textContent = 'Stop Recording';
-                   recordButton.classList.add('recording');
-                   status.textContent = 'Recording...';
-
-               } catch (error) {
-                   console.error('Recording error:', error);
-                   status.textContent = 'Error: ' + error.message;
-               }
-           }
-       });
-
-       playButton.onclick = () => {
-           if (audioPlayback.paused) {
-               audioPlayback.play();
-               playButton.textContent = 'Pause';
-           } else {
-               audioPlayback.pause();
-               playButton.textContent = 'Play Recording';
-           }
-       };
-
-       audioPlayback.onended = () => {
-           playButton.textContent = 'Play Recording';
-       };
-   </script>
-
-   <script>
-       // Helper function to convert AudioBuffer to WAV format
-       function audioBufferToWav(buffer) {
-           const numChannels = buffer.numberOfChannels;
-           const sampleRate = buffer.sampleRate;
-           const format = 1; // PCM
-           const bitDepth = 16;
-           
-           const bytesPerSample = bitDepth / 8;
-           const blockAlign = numChannels * bytesPerSample;
-           
-           const wav = new ArrayBuffer(44 + buffer.length * bytesPerSample);
-           const view = new DataView(wav);
-           
-           // Write WAV header
-           writeString(view, 0, 'RIFF');
-           view.setUint32(4, 36 + buffer.length * bytesPerSample, true);
-           writeString(view, 8, 'WAVE');
-           writeString(view, 12, 'fmt ');
-           view.setUint32(16, 16, true);
-           view.setUint16(20, format, true);
-           view.setUint16(22, numChannels, true);
-           view.setUint32(24, sampleRate, true);
-           view.setUint32(28, sampleRate * blockAlign, true);
-           view.setUint16(32, blockAlign, true);
-           view.setUint16(34, bitDepth, true);
-           writeString(view, 36, 'data');
-           view.setUint32(40, buffer.length * bytesPerSample, true);
-           
-           // Write audio data
-           const offset = 44;
-           const data = new Float32Array(buffer.length);
-           buffer.copyFromChannel(data, 0);
-           
-           for (let i = 0; i < data.length; i++) {
-               const sample = Math.max(-1, Math.min(1, data[i]));
-               view.setInt16(offset + i * bytesPerSample, sample * 0x7FFF, true);
-           }
-           
-           return wav;
-       }
-
-       function writeString(view, offset, string) {
-           for (let i = 0; i < string.length; i++) {
-               view.setUint8(offset + i, string.charCodeAt(i));
-           }
-       }
-
-       // Add this helper function for color coding
-       function getScoreColor(score) {
-           if (score >= 90) return '#27ae60';  // Green for excellent
-           if (score >= 75) return '#2ecc71';  // Light green for good
-           if (score >= 60) return '#f1c40f';  // Yellow for moderate
-           if (score >= 40) return '#e67e22';  // Orange for needs improvement
-           return '#e74c3c';                   // Red for poor
-       }
-
-       // Add this before the existing script content
-       function speakText(text) {
-           const utterance = new SpeechSynthesisUtterance(text);
-           utterance.rate = 0.8; // Slightly slower for clarity
-           utterance.pitch = 1;
-           utterance.volume = 1;
-           speechSynthesis.speak(utterance);
-
-           // Add visual feedback
-           const buttons = document.querySelectorAll('.audio-button');
-           buttons.forEach(button => {
-               if (button.textContent.includes(text)) {
-                   button.classList.add('listen-pulse');
-                   setTimeout(() => button.classList.remove('listen-pulse'), 1000);
-               }
-           });
-       }
-
-       function getPhonemeInstructions(phoneme) {
-           const instructions = {
-               'p': 'Close your lips and release a small puff of air',
-               'b': 'Press your lips together and use your voice',
-               't': 'Touch your tongue tip to the ridge behind your top teeth',
-               'd': 'Touch your tongue tip to the ridge and use your voice',
-               'k': 'Press the back of your tongue to the roof of your mouth',
-               'g': 'Press the back of your tongue and use your voice',
-               's': 'Place your tongue near your top teeth and push air out',
-               'z': 'Same as "s" but use your voice',
-               'f': 'Touch your top teeth to your bottom lip and blow',
-               'v': 'Same as "f" but use your voice',
-               'th': 'Put your tongue between your teeth and blow',
-               'sh': 'Make a groove in your tongue and push air out',
-               'ch': 'Start with "t" and slide into "sh"',
-               'dh': 'Put your tongue between your teeth and use voice',
-               'zh': 'Like "sh" but use your voice',
-               'jh': 'Start with "d" and slide into "zh"',
-               'm': 'Close your lips and hum through your nose',
-               'n': 'Touch your tongue tip up and hum through your nose',
-               'ng': 'Press the back of your tongue up and hum',
-               'l': 'Touch your tongue tip up and let air flow around',
-               'r': 'Pull your tongue back and round your lips',
-               'y': 'Start with "ee" and glide to the next sound',
-               'w': 'Round your lips and glide to the next sound',
-               'iy': 'Smile and say "ee" as in "see"',
-               'ih': 'Relax your smile a bit for "i" as in "sit"',
-               'eh': 'Open your mouth a bit for "e" as in "bed"',
-               'ae': 'Open your mouth wide for "a" as in "cat"',
-               'aa': 'Drop your jaw for "a" as in "father"',
-               'ao': 'Round your lips for "aw" as in "caught"',
-               'uh': 'Relax your tongue for "u" as in "put"',
-               'uw': 'Round your lips tightly for "oo" as in "boot"',
-               'ah': 'Drop your jaw slightly for "u" as in "but"',
-               'er': 'Pull your tongue back for "er" as in "bird"',
-               'ax': 'Relax your tongue for the "a" in "about"',
-               'ey': 'Say "a" as in "say"',
-               'ay': 'Say "i" as in "my"',
-               'oy': 'Say "oy" as in "boy"',
-               'aw': 'Say "ow" as in "now"',
-               'ow': 'Say "o" as in "go"'
-           };
-           return instructions[phoneme.toLowerCase()] || 'Position your mouth as shown in the diagram';
-       }
-
-       // Add this function to determine mouth position class
-       function getMouthClass(phoneme) {
-           const mouthPositions = {
-               'aa': 'mouth-ah',
-               'ah': 'mouth-ah',
-               'ae': 'mouth-ah',
-               'iy': 'mouth-ee',
-               'ih': 'mouth-ee',
-               'uw': 'mouth-oo',
-               'uh': 'mouth-oo',
-               's': 'mouth-s',
-               'z': 'mouth-s',
-               'th': 'mouth-th',
-               'dh': 'mouth-th',
-               'r': 'mouth-r',
-               'l': 'mouth-l',
-               'k': 'mouth-k',
-               'g': 'mouth-k',
-               'f': 'mouth-f',
-               'v': 'mouth-f',
-               'm': 'mouth-m',
-               'n': 'mouth-n',
-               'ng': 'mouth-n',
-               'p': 'mouth-m',
-               'b': 'mouth-m',
-               't': 'mouth-s',
-               'd': 'mouth-s',
-               'sh': 'mouth-s',
-               'ch': 'mouth-s',
-               'jh': 'mouth-s',
-               'y': 'mouth-ee',
-               'w': 'mouth-oo',
-               'ey': 'mouth-ee',
-               'ay': 'mouth-ah',
-               'oy': 'mouth-oo',
-               'ow': 'mouth-oo',
-               'aw': 'mouth-ah',
-               'er': 'mouth-r'
-           };
-           return mouthPositions[phoneme.toLowerCase()] || 'mouth-ah';
-       }
-
-       // Add this function before the existing script content
-       function startPractice() {
-           // Ensure problem sounds are stored in localStorage
-           if (problemSounds && problemSounds.length > 0) {
-               localStorage.setItem('problemSounds', JSON.stringify(problemSounds));
-           }
-           // Navigate to practice page
-           window.location.href = 'practice.html';
-       }
-   </script>
+    <!-- Load components and utilities -->
+    <script src="./js/components.js"></script>
+    <script src="./js/charts.js"></script>
+    <script src="./js/3dmodel.js"></script>
+    <script src="./js/ui-components.js"></script>
+    
+    <script>
+        // Test prompts with varied phoneme coverage
+        const prompts = [
+            "The red robin ran rapidly around the rocky river.",
+            "She sells seashells by the seashore as the sun shines.",
+            "Three thrilling thieves thought thoroughly through their theft.",
+            "Lucy likes light lilac flowers along the lively lake.",
+            "Can you carefully carry the colorful cards to the corner?"
+        ];
+        
+        let currentPromptIndex = 0;
+        let results = [];
+        let mouthModel;
+        let mouthModelVisible = false;
+        let problemPhonemes = [];
+        
+        // Media recorder variables
+        let mediaRecorder;
+        let audioChunks = [];
+        let audioUrl;
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize UI
+            const startTestBtn = document.getElementById('startTestBtn');
+            const recordButton = document.getElementById('recordButton');
+            const playButton = document.getElementById('playButton');
+            const nextButton = document.getElementById('nextButton');
+            const promptDisplay = document.getElementById('promptDisplay');
+            const status = document.getElementById('status');
+            const audioPlayback = document.getElementById('audioPlayback');
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+            
+            // Initialize 3D model
+            mouthModel = new FluentForm.MouthModel('modelContent');
+            
+            // Set initial prompt
+            promptDisplay.textContent = prompts[currentPromptIndex];
+            
+            // Start test button
+            startTestBtn.addEventListener('click', () => {
+                document.getElementById('instructions').style.display = 'none';
+                document.getElementById('testInterface').style.display = 'block';
+                promptDisplay.textContent = prompts[currentPromptIndex];
+                updateProgress();
+            });
+            
+            // Close model button
+            document.getElementById('closeModelBtn').addEventListener('click', () => {
+                document.getElementById('mouthModelContainer').style.display = 'none';
+                mouthModelVisible = false;
+            });
+            
+            // Record button
+            recordButton.addEventListener('click', async () => {
+                if (mediaRecorder && mediaRecorder.state === 'recording') {
+                    mediaRecorder.stop();
+                    recordButton.innerHTML = '<i class="bi bi-record-circle btn-icon"></i> Start Recording';
+                    recordButton.classList.remove('btn-error');
+                    recordButton.classList.add('btn-accent');
+                } else {
+                    try {
+                        const stream = await navigator.mediaDevices.getUserMedia({
+                            audio: {
+                                channelCount: 1,
+                                sampleRate: 16000
+                            }
+                        });
+                        
+                        audioChunks = [];
+                        
+                        mediaRecorder = new MediaRecorder(stream, {
+                            mimeType: 'audio/webm'
+                        });
+                        
+                        mediaRecorder.ondataavailable = (event) => {
+                            if (event.data.size > 0) {
+                                audioChunks.push(event.data);
+                            }
+                        };
+                        
+                        mediaRecorder.onstop = () => {
+                            // Create the WebM blob
+                            const webmBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                            
+                            // Create URL for playback
+                            if (audioUrl) {
+                                URL.revokeObjectURL(audioUrl);
+                            }
+                            audioUrl = URL.createObjectURL(webmBlob);
+                            
+                            // Set up audio playback
+                            audioPlayback.src = audioUrl;
+                            audioPlayback.style.display = 'block';
+                            playButton.disabled = false;
+                            
+                            // Convert WebM to WAV and analyze
+                            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                            const fileReader = new FileReader();
+                            
+                            fileReader.onloadend = () => {
+                                const arrayBuffer = fileReader.result;
+                                audioContext.decodeAudioData(arrayBuffer, (audioBuffer) => {
+                                    // Convert to WAV
+                                    const wavBuffer = audioBufferToWav(audioBuffer);
+                                    const wavBlob = new Blob([wavBuffer], { type: 'audio/wav' });
+                                    
+                                    // Show loading state
+                                    document.getElementById('transcription').innerHTML = 
+                                        '<div class="loading"><i class="bi bi-arrow-repeat"></i> Processing your speech...</div>';
+                                    document.getElementById('analysis').innerHTML = 
+                                        '<div class="loading"><i class="bi bi-arrow-repeat"></i> Analyzing your pronunciation...</div>';
+                                    
+                                    // Send to server with reference text
+                                    const formData = new FormData();
+                                    formData.append('audio', wavBlob, 'recording.wav');
+                                    formData.append('referenceText', prompts[currentPromptIndex]);
+                                    
+                                    fetch('http://127.0.0.1:3000/api/analyze-speech', {
+                                        method: 'POST',
+                                        body: formData
+                                    })
+                                    .then(response => response.json())
+                                    .then(data => {
+                                        console.log('Analysis data:', data);
+                                        
+                                        // Store results for this prompt
+                                        results.push(data);
+                                        
+                                        // Update the UI with the results
+                                        FluentForm.UI.createVisualTranscription('transcription', data.transcription, data.phonemes);
+                                        FluentForm.UI.initVisualTranscriptionInteractions();
+                                        
+                                        // Create phoneme analysis display
+                                        const phonemeGridHtml = FluentForm.UI.createPhonemeGrid(data.phonemes);
+                                        document.getElementById('analysis').innerHTML = phonemeGridHtml;
+                                        
+                                        // Find problem phonemes
+                                        const currentProblemPhonemes = data.phonemes
+                                            .filter(p => p.accuracyScore < 70)
+                                            .map(p => p.phoneme);
+                                            
+                                        problemPhonemes = [...new Set([...problemPhonemes, ...currentProblemPhonemes])];
+                                        
+                                        // Enable next button
+                                        nextButton.disabled = false;
+                                        
+                                        status.textContent = 'Analysis complete';
+                                    })
+                                    .catch(error => {
+                                        console.error('Analysis error:', error);
+                                        document.getElementById('transcription').innerHTML = `
+                                            <div class="error-state">
+                                                <i class="bi bi-exclamation-triangle"></i>
+                                                <p>There was an error processing your speech.</p>
+                                                <p>Please try again later or contact support.</p>
+                                            </div>
+                                        `;
+                                        document.getElementById('analysis').innerHTML = `
+                                            <div class="error-state">
+                                                <i class="bi bi-exclamation-triangle"></i>
+                                                <p>Error: ${error.message}</p>
+                                            </div>
+                                        `;
+                                        status.textContent = 'Error: ' + error.message;
+                                    });
+                                });
+                            };
+                            
+                            fileReader.readAsArrayBuffer(webmBlob);
+                        };
+                        
+                        mediaRecorder.start(100);
+                        recordButton.innerHTML = '<i class="bi bi-stop-fill btn-icon"></i> Stop Recording';
+                        recordButton.classList.remove('btn-accent');
+                        recordButton.classList.add('btn-error');
+                        status.textContent = 'Recording...';
+                        
+                    } catch (error) {
+                        console.error('Recording error:', error);
+                        status.textContent = 'Error: ' + error.message;
+                    }
+                }
+            });
+            
+            // Play button
+            playButton.onclick = () => {
+                if (audioPlayback.paused) {
+                    audioPlayback.play();
+                    playButton.innerHTML = '<i class="bi bi-pause-fill btn-icon"></i> Pause';
+                } else {
+                    audioPlayback.pause();
+                    playButton.innerHTML = '<i class="bi bi-play-fill btn-icon"></i> Play Recording';
+                }
+            };
+            
+            audioPlayback.onended = () => {
+                playButton.innerHTML = '<i class="bi bi-play-fill btn-icon"></i> Play Recording';
+            };
+            
+            // Next button
+            nextButton.addEventListener('click', () => {
+                currentPromptIndex++;
+                
+                if (currentPromptIndex < prompts.length) {
+                    // Move to next prompt
+                    promptDisplay.textContent = prompts[currentPromptIndex];
+                    updateProgress();
+                    
+                    // Reset UI for next recording
+                    resetRecordingUI();
+                } else {
+                    // Test complete, show results
+                    showResults();
+                }
+            });
+            
+            // Helper function to update progress
+            function updateProgress() {
+                const progress = ((currentPromptIndex) / prompts.length) * 100;
+                progressBar.style.width = `${progress}%`;
+                progressText.textContent = `Prompt ${currentPromptIndex + 1} of ${prompts.length}`;
+            }
+            
+            // Helper function to reset UI for next prompt
+            function resetRecordingUI() {
+                document.getElementById('transcription').innerHTML = 'Transcription will appear here...';
+                document.getElementById('analysis').innerHTML = 'Analysis will appear here...';
+                audioPlayback.style.display = 'none';
+                playButton.disabled = true;
+                nextButton.disabled = true;
+                status.textContent = 'Click to start recording';
+            }
+            
+            // Helper function to show final results
+            function showResults() {
+                document.getElementById('testInterface').style.display = 'none';
+                document.getElementById('resultsSummary').style.display = 'block';
+                
+                // Calculate overall score
+                const allPhonemeScores = results.flatMap(r => r.phonemes.map(p => p.accuracyScore));
+                const overallScore = Math.round(allPhonemeScores.reduce((sum, score) => sum + score, 0) / allPhonemeScores.length);
+                
+                // Update overall score display
+                document.getElementById('overallScore').textContent = overallScore;
+                
+                // Style the score circle based on the score
+                const scoreCircle = document.querySelector('.score-circle');
+                if (overallScore >= 90) {
+                    scoreCircle.classList.add('excellent');
+                } else if (overallScore >= 75) {
+                    scoreCircle.classList.add('good');
+                } else if (overallScore >= 60) {
+                    scoreCircle.classList.add('average');
+                } else {
+                    scoreCircle.classList.add('needs-work');
+                }
+                
+                // Aggregate all phonemes across all prompts
+                const allPhonemes = results.flatMap(r => r.phonemes);
+                
+                // Group by phoneme and calculate average score
+                const phonemeMap = new Map();
+                allPhonemes.forEach(p => {
+                    if (!phonemeMap.has(p.phoneme)) {
+                        phonemeMap.set(p.phoneme, { 
+                            phoneme: p.phoneme, 
+                            scores: [], 
+                            words: new Set() 
+                        });
+                    }
+                    phonemeMap.get(p.phoneme).scores.push(p.accuracyScore);
+                    phonemeMap.get(p.phoneme).words.add(p.fromWord);
+                });
+                
+                // Convert to array and calculate averages
+                const phonemeAverages = Array.from(phonemeMap.values()).map(p => ({
+                    phoneme: p.phoneme,
+                    accuracyScore: Math.round(p.scores.reduce((sum, score) => sum + score, 0) / p.scores.length),
+                    exampleWord: Array.from(p.words)[0] || ''
+                }));
+                
+                // Sort by score (lowest first)
+                phonemeAverages.sort((a, b) => a.accuracyScore - b.accuracyScore);
+                
+                // Populate phoneme grid
+                const phonemeGrid = document.getElementById('phonemeGrid');
+                phonemeGrid.innerHTML = '';
+                
+                phonemeAverages.forEach(p => {
+                    const card = FluentForm.createPhonemeCard(p.phoneme, p.accuracyScore, p.exampleWord);
+                    phonemeGrid.appendChild(card);
+                });
+                
+                // Create focus areas section
+                const focusAreas = document.getElementById('focusAreas');
+                focusAreas.innerHTML = '';
+                
+                // Get the 3-5 lowest scoring phonemes
+                const lowestPhonemes = phonemeAverages.slice(0, Math.min(5, phonemeAverages.length)).filter(p => p.accuracyScore < 75);
+                
+                if (lowestPhonemes.length > 0) {
+                    // Save problem sounds to local storage
+                    localStorage.setItem('problemSounds', JSON.stringify(
+                        lowestPhonemes.map(p => ({ phoneme: p.phoneme, score: p.accuracyScore }))
+                    ));
+                    
+                    const focusPhonemesList = document.createElement('ul');
+                    focusPhonemesList.className = 'focus-phonemes-list';
+                    
+                    lowestPhonemes.forEach(p => {
+                        const item = document.createElement('li');
+                        item.className = 'focus-phoneme-item';
+                        item.innerHTML = `
+                            <div class="focus-phoneme">
+                                <span class="phoneme-symbol">${p.phoneme}</span>
+                                <div class="focus-phoneme-details">
+                                    <span class="phoneme-score ${getScoreClass(p.accuracyScore)}">${p.accuracyScore}%</span>
+                                    <span class="phoneme-word">Example: "${p.exampleWord}"</span>
+                                </div>
+                                <button class="btn btn-small btn-secondary show-model-btn" data-phoneme="${p.phoneme}">
+                                    <i class="bi bi-box"></i> Show Position
+                                </button>
+                            </div>
+                        `;
+                        focusPhonemesList.appendChild(item);
+                    });
+                    
+                    focusAreas.appendChild(focusPhonemesList);
+                    
+                    // Add event listeners for show model buttons
+                    document.querySelectorAll('.show-model-btn').forEach(btn => {
+                        btn.addEventListener('click', () => {
+                            const phoneme = btn.getAttribute('data-phoneme');
+                            document.getElementById('mouthModelContainer').style.display = 'flex';
+                            mouthModelVisible = true;
+                            mouthModel.showPhonemePosition(phoneme);
+                        });
+                    });
+                    
+                    // Generate recommendations text
+                    const recommendationsText = document.getElementById('recommendationsText');
+                    recommendationsText.innerHTML = `
+                        Based on your assessment, we recommend focusing on the 
+                        ${lowestPhonemes.length === 1 ? 'phoneme' : 'phonemes'} 
+                        ${lowestPhonemes.map(p => `<strong>${p.phoneme}</strong>`).join(', ')}. 
+                        Regular practice with our targeted exercises will help improve your pronunciation.
+                    `;
+                    
+                    // Create exercise recommendations
+                    const exerciseRecommendations = document.getElementById('exerciseRecommendations');
+                    exerciseRecommendations.innerHTML = '';
+                    
+                    // Just create 3 sample exercise recommendations for the lowest scoring phonemes
+                    for (let i = 0; i < Math.min(3, lowestPhonemes.length); i++) {
+                        const phoneme = lowestPhonemes[i].phoneme;
+                        const difficulty = i === 0 ? 'Beginner' : (i === 1 ? 'Intermediate' : 'Advanced');
+                        
+                        let exerciseTitle, exerciseDescription;
+                        
+                        if (phoneme === 'r') {
+                            exerciseTitle = 'R Sound Practice';
+                            exerciseDescription = 'Focus on proper tongue placement for clear R sounds.';
+                        } else if (phoneme === 'th') {
+                            exerciseTitle = 'TH Sound Practice';
+                            exerciseDescription = 'Learn the correct tongue position between your teeth.';
+                        } else if (phoneme === 's') {
+                            exerciseTitle = 'S Sound Clarity';
+                            exerciseDescription = 'Reduce lisping with targeted S sound exercises.';
+                        } else {
+                            exerciseTitle = `${phoneme.toUpperCase()} Sound Practice`;
+                            exerciseDescription = `Improve your ${phoneme} pronunciation with targeted exercises.`;
+                        }
+                        
+                        const card = FluentForm.createExerciseCard(
+                            exerciseTitle, 
+                            exerciseDescription, 
+                            phoneme, 
+                            difficulty
+                        );
+                        exerciseRecommendations.appendChild(card);
+                    }
+                    
+                } else {
+                    focusAreas.innerHTML = `
+                        <div class="empty-state">
+                            <i class="bi bi-emoji-smile"></i>
+                            <p>Great job! You don't have any significant problem areas.</p>
+                            <p>You can still practice to further improve your pronunciation.</p>
+                        </div>
+                    `;
+                    
+                    document.getElementById('recommendationsText').textContent = 
+                        "Excellent work! Your pronunciation is already quite good. Continue practicing to maintain your skills.";
+                }
+            }
+            
+            // Helper function to get score class for styling
+            function getScoreClass(score) {
+                if (score >= 90) return 'excellent';
+                if (score >= 75) return 'good';
+                if (score >= 60) return 'average';
+                if (score >= 40) return 'needs-work';
+                return 'poor';
+            }
+        });
+        
+        // Helper function to convert AudioBuffer to WAV format
+        function audioBufferToWav(buffer) {
+            const numChannels = buffer.numberOfChannels;
+            const sampleRate = buffer.sampleRate;
+            const format = 1; // PCM
+            const bitDepth = 16;
+            
+            const bytesPerSample = bitDepth / 8;
+            const blockAlign = numChannels * bytesPerSample;
+            
+            const wav = new ArrayBuffer(44 + buffer.length * bytesPerSample);
+            const view = new DataView(wav);
+            
+            // Write WAV header
+            writeString(view, 0, 'RIFF');
+            view.setUint32(4, 36 + buffer.length * bytesPerSample, true);
+            writeString(view, 8, 'WAVE');
+            writeString(view, 12, 'fmt ');
+            view.setUint32(16, 16, true);
+            view.setUint16(20, format, true);
+            view.setUint16(22, numChannels, true);
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, sampleRate * blockAlign, true);
+            view.setUint16(32, blockAlign, true);
+            view.setUint16(34, bitDepth, true);
+            writeString(view, 36, 'data');
+            view.setUint32(40, buffer.length * bytesPerSample, true);
+            
+            // Write audio data
+            const offset = 44;
+            const data = new Float32Array(buffer.length);
+            buffer.copyFromChannel(data, 0);
+            
+            for (let i = 0; i < data.length; i++) {
+                const sample = Math.max(-1, Math.min(1, data[i]));
+                view.setInt16(offset + i * bytesPerSample, sample * 0x7FFF, true);
+            }
+            
+            return wav;
+        }
+        
+        function writeString(view, offset, string) {
+            for (let i = 0; i < string.length; i++) {
+                view.setUint8(offset + i, string.charCodeAt(i));
+            }
+        }
+    </script>
+    
+    <style>
+        /* Additional styles specific to proficiency test */
+        .score-circle {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background-color: var(--info-color-light);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto var(--space-lg);
+            color: var(--neutral-dark);
+            transition: all var(--transition-normal) var(--transition-timing-ease);
+        }
+        
+        .score-circle #overallScore {
+            font-size: 2.5rem;
+            font-weight: 700;
+            line-height: 1;
+        }
+        
+        .score-circle .percent {
+            font-size: 1rem;
+            font-weight: 500;
+        }
+        
+        .score-circle.excellent {
+            background-color: var(--success-color-light);
+            color: var(--success-color);
+        }
+        
+        .score-circle.good {
+            background-color: #d0f0f0;
+            color: var(--score-good);
+        }
+        
+        .score-circle.average {
+            background-color: #ffefd0;
+            color: var(--score-average);
+        }
+        
+        .score-circle.needs-work {
+            background-color: var(--warning-color-light);
+            color: var(--warning-color);
+        }
+        
+        .overall-score-container {
+            text-align: center;
+            margin-bottom: var(--space-xl);
+        }
+        
+        .score-label {
+            font-size: var(--font-size-lg);
+            font-weight: 500;
+            margin-top: var(--space-xs);
+        }
+        
+        .summary-card {
+            background-color: var(--neutral-white);
+            border-radius: var(--border-radius-large);
+            box-shadow: var(--shadow-medium);
+            overflow: hidden;
+            margin-top: var(--space-lg);
+        }
+        
+        .summary-header {
+            padding: var(--space-lg);
+            background-color: var(--fluent-primary);
+            color: var(--neutral-white);
+        }
+        
+        .summary-header h4 {
+            margin: 0;
+            color: var(--neutral-white);
+        }
+        
+        .summary-content {
+            padding: var(--space-lg);
+        }
+        
+        .summary-footer {
+            padding: var(--space-lg);
+            border-top: 1px solid var(--background-light);
+            display: flex;
+            justify-content: flex-end;
+            gap: var(--space-md);
+        }
+        
+        .focus-phonemes-list {
+            list-style: none;
+            padding: 0;
+            margin: var(--space-md) 0;
+        }
+        
+        .focus-phoneme-item {
+            margin-bottom: var(--space-md);
+        }
+        
+        .focus-phoneme {
+            display: flex;
+            align-items: center;
+            background-color: var(--background-light);
+            border-radius: var(--border-radius-medium);
+            padding: var(--space-md);
+        }
+        
+        .focus-phoneme .phoneme-symbol {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background-color: var(--fluent-primary-light);
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: var(--space-md);
+        }
+        
+        .focus-phoneme-details {
+            flex: 1;
+        }
+        
+        .focus-phoneme .phoneme-score {
+            font-weight: 600;
+            font-size: var(--font-size-lg);
+            display: block;
+        }
+        
+        .focus-phoneme .phoneme-word {
+            font-size: var(--font-size-sm);
+            color: var(--neutral-light);
+        }
+        
+        .show-model-btn {
+            margin-left: auto;
+        }
+        
+        .model-container-fixed {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .close-model-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: var(--neutral-white);
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: var(--shadow-medium);
+            z-index: 1001;
+        }
+        
+        .progress-indicator {
+            margin-bottom: var(--space-lg);
+        }
+        
+        .progress-label {
+            font-weight: 500;
+            margin-bottom: var(--space-xs);
+        }
+        
+        #progressText {
+            font-size: var(--font-size-sm);
+            color: var(--neutral-light);
+            margin-top: var(--space-xs);
+        }
+        
+        .recommended-exercises {
+            margin-top: var(--space-lg);
+        }
+        
+        .recommendations-container {
+            margin-top: var(--space-xl);
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: var(--space-xl) var(--space-lg);
+            color: var(--neutral-light);
+        }
+        
+        .empty-state i {
+            font-size: 2rem;
+            margin-bottom: var(--space-md);
+            color: var(--fluent-primary);
+        }
+        
+        .error-state {
+            color: var(--error-color);
+            text-align: center;
+            padding: var(--space-lg);
+        }
+        
+        .error-state i {
+            font-size: 2rem;
+            margin-bottom: var(--space-md);
+        }
+        
+        .loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: var(--space-lg);
+            color: var(--neutral-light);
+        }
+        
+        .loading i {
+            font-size: 2rem;
+            margin-bottom: var(--space-md);
+            animation: spin 1.5s linear infinite;
+        }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+    </style>
 </body>
 </html>

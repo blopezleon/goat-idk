@@ -3,109 +3,610 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>AI Speech Therapist - Welcome</title>
-    <!-- Check if this path is correct relative to index.html -->
+    <title>FluentForm - Speech Therapy Dashboard</title>
     <link rel="stylesheet" href="./styles.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <style>
-        /* CSS styles look correct */
-        body {
-            font-family: 'Poppins', sans-serif;
-            margin: 0;
-            padding: 0;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            min-height: 100vh;
-        }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 2rem;
-            text-align: center;
-        }
-
-        .hero {
-            margin-top: 4rem;
-        }
-
-        h1 {
-            color: #2c3e50;
-            font-size: 2.5rem;
-            margin-bottom: 1rem;
-        }
-
-        .subtitle {
-            color: #34495e;
-            font-size: 1.2rem;
-            margin-bottom: 2rem;
-        }
-
-        .cta-button {
-            display: inline-block;
-            padding: 1rem 2rem;
-            background-color: #3498db;
-            color: white;
-            text-decoration: none;
-            border-radius: 30px;
-            font-weight: 500;
-            transition: all 0.3s ease;
-        }
-
-        .cta-button:hover {
-            background-color: #2980b9;
-            transform: translateY(-2px);
-        }
-
-        .features {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 2rem;
-            margin-top: 4rem;
-        }
-
-        .feature-card {
-            background: white;
-            padding: 2rem;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        .feature-card h3 {
-            color: #2c3e50;
-            margin-bottom: 1rem;
-        }
-
-        .feature-card p {
-            color: #7f8c8d;
-            line-height: 1.6;
-        }
-    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-    <div class="container">
-        <div class="hero">
-            <h1>Welcome to the FluentForm</h1>
-            <p class="subtitle">Your personal assistant for speech therapy</p>
+    <!-- Accessibility skip link -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
 
-            <a href="proficiency.html" class="cta-button">Get Started</a>
-        </div>
+    <div class="page-wrapper">
+        <!-- Header -->
+        <header class="header">
+            <div class="container header-container">
+                <div class="logo">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM16 16C15.59 16.41 15.01 16.64 14.4 16.64C13.79 16.64 13.21 16.41 12.8 16L9 12.19V15C9 16.1 8.1 17 7 17C5.9 17 5 16.1 5 15V9C5 7.9 5.9 7 7 7C8.1 7 9 7.9 9 9V11.81L12.8 8C13.21 7.59 13.79 7.36 14.4 7.36C15.01 7.36 15.59 7.59 16 8C16.41 8.41 16.64 8.99 16.64 9.6C16.64 10.21 16.41 10.79 16 11.2L13.19 14L16 16.8C16.41 17.21 16.64 17.79 16.64 18.4C16.64 19.01 16.41 19.59 16 20" fill="#0078d4"/>
+                    </svg>
+                    <span class="logo-text">FluentForm</span>
+                </div>
+                <nav>
+                    <ul class="nav-links">
+                        <li><a href="index.html" class="active">Dashboard</a></li>
+                        <li><a href="proficiency.html">Proficiency Test</a></li>
+                        <li><a href="practice.html">Practice</a></li>
+                        <li><a href="analyze.html">Analyze</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </header>
 
-        <div class="features">
-            <div class="feature-card">
-                <h3>Personalized Practice</h3>
-                <p>Get customized exercises tailored to your specific needs</p>
+        <!-- Main Content -->
+        <main class="main-content" id="main-content">
+            <div class="container">
+                <!-- Welcome Section -->
+                <section class="welcome-section fade-in">
+                    <h1>Welcome to FluentForm</h1>
+                    <p class="subtitle">Your AI-powered speech therapy assistant</p>
+                </section>
+
+                <!-- Getting Started Card for New Users -->
+                <section class="getting-started-card card slide-up" id="newUserCard">
+                    <div class="card-header">
+                        <h2>Get Started with Speech Therapy</h2>
+                    </div>
+                    <div class="card-content">
+                        <p>Welcome to FluentForm, your personal speech therapy assistant. To begin your journey toward improved speech, take a quick proficiency test to identify areas for improvement.</p>
+                        
+                        <div class="steps-container">
+                            <div class="step">
+                                <div class="step-number">1</div>
+                                <div class="step-content">
+                                    <h3>Take the Proficiency Test</h3>
+                                    <p>Complete a short assessment to identify speech sounds you might struggle with.</p>
+                                </div>
+                            </div>
+                            <div class="step">
+                                <div class="step-number">2</div>
+                                <div class="step-content">
+                                    <h3>Get Personalized Exercises</h3>
+                                    <p>Receive custom exercises focused on your specific needs.</p>
+                                </div>
+                            </div>
+                            <div class="step">
+                                <div class="step-number">3</div>
+                                <div class="step-content">
+                                    <h3>Practice Regularly</h3>
+                                    <p>Use the practice module to improve your pronunciation with real-time feedback.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <a href="proficiency.html" class="btn btn-primary btn-large">
+                            <i class="bi bi-mic-fill btn-icon"></i>
+                            Start Proficiency Test
+                        </a>
+                    </div>
+                </section>
+
+                <!-- Dashboard for Returning Users (Hidden by default, shown via JS) -->
+                <section class="dashboard-container" id="returningUserDashboard" style="display:none;">
+                    <!-- Progress Overview -->
+                    <h2>Your Speech Progress</h2>
+                    <div class="dashboard">
+                        <div class="card metric-card">
+                            <div class="metric-value">73%</div>
+                            <div class="metric-label">Overall Progress</div>
+                            <div class="progress-container">
+                                <div class="progress-bar progress-bar-good" style="width:73%"></div>
+                            </div>
+                            <div class="metric-change positive">
+                                <i class="bi bi-arrow-up"></i> 7% improvement this week
+                            </div>
+                        </div>
+                        
+                        <div class="card metric-card">
+                            <div class="metric-value">12</div>
+                            <div class="metric-label">Practice sessions</div>
+                            <div class="metric-change positive">
+                                <i class="bi bi-arrow-up"></i> 3 more than last week
+                            </div>
+                        </div>
+                        
+                        <div class="card metric-card">
+                            <div class="metric-value">3</div>
+                            <div class="metric-label">Focus phonemes</div>
+                            <div class="phoneme-badges">
+                                <span class="phoneme-badge">r</span>
+                                <span class="phoneme-badge">th</span>
+                                <span class="phoneme-badge">sh</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Progress Chart -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Weekly Progress</h3>
+                        </div>
+                        <div class="card-content">
+                            <canvas id="progressChart" height="250"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Recommendations -->
+                    <h2 class="section-title">Recommended Exercises</h2>
+                    <div class="recommendations-grid">
+                        <div class="card exercise-recommendation">
+                            <div class="exercise-badge">
+                                <i class="bi bi-trophy-fill"></i>
+                                <span>Most Needed</span>
+                            </div>
+                            <h3>Practice "r" Sound</h3>
+                            <p>Focus on improving your "r" pronunciation with targeted exercises.</p>
+                            <div class="exercise-stats">
+                                <div class="stat">
+                                    <div class="stat-value">62%</div>
+                                    <div class="stat-label">Current Score</div>
+                                </div>
+                                <div class="progress-bar-mini-container">
+                                    <div class="progress-bar-mini progress-bar-needs-work" style="width:62%"></div>
+                                </div>
+                            </div>
+                            <a href="practice.html?phoneme=r" class="btn btn-primary">Start Practice</a>
+                        </div>
+                        
+                        <div class="card exercise-recommendation">
+                            <div class="exercise-badge">
+                                <i class="bi bi-graph-up-arrow"></i>
+                                <span>Improving</span>
+                            </div>
+                            <h3>Practice "th" Sound</h3>
+                            <p>Continue improving your "th" pronunciation with these exercises.</p>
+                            <div class="exercise-stats">
+                                <div class="stat">
+                                    <div class="stat-value">78%</div>
+                                    <div class="stat-label">Current Score</div>
+                                </div>
+                                <div class="progress-bar-mini-container">
+                                    <div class="progress-bar-mini progress-bar-good" style="width:78%"></div>
+                                </div>
+                            </div>
+                            <a href="practice.html?phoneme=th" class="btn btn-primary">Start Practice</a>
+                        </div>
+                        
+                        <div class="card exercise-recommendation">
+                            <div class="exercise-badge">
+                                <i class="bi bi-stars"></i>
+                                <span>New Challenge</span>
+                            </div>
+                            <h3>Practice "sh" Sound</h3>
+                            <p>Begin working on your "sh" sound pronunciation.</p>
+                            <div class="exercise-stats">
+                                <div class="stat">
+                                    <div class="stat-value">70%</div>
+                                    <div class="stat-label">Current Score</div>
+                                </div>
+                                <div class="progress-bar-mini-container">
+                                    <div class="progress-bar-mini progress-bar-average" style="width:70%"></div>
+                                </div>
+                            </div>
+                            <a href="practice.html?phoneme=sh" class="btn btn-primary">Start Practice</a>
+                        </div>
+                    </div>
+
+                    <!-- Recent Activity -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Recent Activity</h3>
+                        </div>
+                        <div class="card-content">
+                            <div class="activity-list">
+                                <div class="activity-item">
+                                    <div class="activity-icon">
+                                        <i class="bi bi-mic-fill"></i>
+                                    </div>
+                                    <div class="activity-content">
+                                        <h4>Practice Session Completed</h4>
+                                        <p>Worked on "r" sound - Scored 68%</p>
+                                        <div class="activity-time">Today, 2:30 PM</div>
+                                    </div>
+                                </div>
+                                <div class="activity-item">
+                                    <div class="activity-icon">
+                                        <i class="bi bi-mic-fill"></i>
+                                    </div>
+                                    <div class="activity-content">
+                                        <h4>Practice Session Completed</h4>
+                                        <p>Worked on "th" sound - Scored 75%</p>
+                                        <div class="activity-time">Yesterday, 11:15 AM</div>
+                                    </div>
+                                </div>
+                                <div class="activity-item">
+                                    <div class="activity-icon">
+                                        <i class="bi bi-award-fill"></i>
+                                    </div>
+                                    <div class="activity-content">
+                                        <h4>Achievement Unlocked</h4>
+                                        <p>3-Day Practice Streak!</p>
+                                        <div class="activity-time">Mar 25, 4:45 PM</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-footer">
+                            <a href="practice.html" class="btn btn-secondary">
+                                <i class="bi bi-mic-fill btn-icon"></i>
+                                Start New Practice Session
+                            </a>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Features Section -->
+                <section class="features-section">
+                    <h2 class="section-title">How FluentForm Helps You</h2>
+                    <div class="features-grid">
+                        <div class="feature-card card">
+                            <div class="feature-icon">
+                                <i class="bi bi-clipboard2-pulse"></i>
+                            </div>
+                            <h3>Personalized Practice</h3>
+                            <p>Get customized exercises tailored to your specific speech needs</p>
+                        </div>
+                        <div class="feature-card card">
+                            <div class="feature-icon">
+                                <i class="bi bi-soundwave"></i>
+                            </div>
+                            <h3>Real-time Feedback</h3>
+                            <p>Receive instant feedback on your pronunciation and speech patterns</p>
+                        </div>
+                        <div class="feature-card card">
+                            <div class="feature-icon">
+                                <i class="bi bi-graph-up"></i>
+                            </div>
+                            <h3>Track Progress</h3>
+                            <p>Monitor your improvement over time with detailed analytics</p>
+                        </div>
+                        <div class="feature-card card">
+                            <div class="feature-icon">
+                                <i class="bi bi-person-video3"></i>
+                            </div>
+                            <h3>3D Visualization</h3>
+                            <p>Learn proper mouth and tongue positioning with interactive 3D models</p>
+                        </div>
+                    </div>
+                </section>
             </div>
-            <div class="feature-card">
-                <h3>Real-time Feedback</h3>
-                <p>Receive instant feedback on your pronunciation and speech patterns</p>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="container">
+                <div class="footer-content">
+                    <div class="footer-logo">
+                        <span class="logo-text">FluentForm</span>
+                        <p>Your AI speech therapy assistant</p>
+                    </div>
+                    <div class="footer-links">
+                        <ul>
+                            <li><a href="index.html">Dashboard</a></li>
+                            <li><a href="proficiency.html">Proficiency Test</a></li>
+                            <li><a href="practice.html">Practice</a></li>
+                            <li><a href="analyze.html">Analyze</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="footer-bottom">
+                    <p>&copy; 2023 FluentForm - AI Speech Therapy</p>
+                </div>
             </div>
-            <div class="feature-card">
-                <h3>Track Progress</h3>
-                <p>Monitor your improvement over time with detailed analytics</p>
-            </div>
-        </div>
+        </footer>
     </div>
+
+    <script>
+        // Check if user has completed proficiency test before
+        document.addEventListener('DOMContentLoaded', function() {
+            const hasCompletedTest = localStorage.getItem('problemSounds');
+            
+            if (hasCompletedTest) {
+                // Show dashboard for returning users
+                document.getElementById('newUserCard').style.display = 'none';
+                document.getElementById('returningUserDashboard').style.display = 'block';
+                
+                // Initialize progress chart
+                initProgressChart();
+            }
+        });
+        
+        // Initialize progress chart with sample data
+        function initProgressChart() {
+            const ctx = document.getElementById('progressChart').getContext('2d');
+            const chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    datasets: [
+                        {
+                            label: 'Overall Score',
+                            data: [65, 67, 70, 68, 72, 75, 73],
+                            borderColor: '#0078d4',
+                            backgroundColor: 'rgba(0, 120, 212, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        },
+                        {
+                            label: '"r" Sound',
+                            data: [55, 57, 56, 58, 60, 61, 62],
+                            borderColor: '#e67e22',
+                            backgroundColor: 'transparent',
+                            tension: 0.4
+                        },
+                        {
+                            label: '"th" Sound',
+                            data: [68, 70, 72, 74, 75, 77, 78],
+                            borderColor: '#2eb8b8',
+                            backgroundColor: 'transparent',
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            min: 50,
+                            max: 100,
+                            ticks: {
+                                callback: function(value) {
+                                    return value + '%';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+
+    <style>
+        /* Additional styles for this page */
+        .subtitle {
+            font-size: var(--font-size-lg);
+            color: var(--neutral-light);
+            margin-bottom: var(--space-xl);
+        }
+        
+        .welcome-section {
+            margin-bottom: var(--space-xl);
+        }
+        
+        .getting-started-card {
+            margin-bottom: var(--space-xxl);
+        }
+        
+        .steps-container {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-lg);
+            margin: var(--space-lg) 0;
+        }
+        
+        .step {
+            display: flex;
+            gap: var(--space-md);
+        }
+        
+        .step-number {
+            width: 36px;
+            height: 36px;
+            background-color: var(--fluent-primary);
+            color: white;
+            border-radius: var(--border-radius-circle);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+        
+        .step-content h3 {
+            margin-bottom: var(--space-xs);
+        }
+        
+        .section-title {
+            margin: var(--space-xl) 0 var(--space-lg);
+        }
+        
+        .recommendations-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: var(--space-lg);
+            margin-bottom: var(--space-xl);
+        }
+        
+        .exercise-recommendation {
+            padding: var(--space-lg);
+            position: relative;
+        }
+        
+        .exercise-badge {
+            position: absolute;
+            top: var(--space-md);
+            right: var(--space-md);
+            display: flex;
+            align-items: center;
+            gap: var(--space-xs);
+            background-color: var(--fluent-accent);
+            color: var(--neutral-dark);
+            padding: var(--space-xxs) var(--space-xs);
+            border-radius: var(--border-radius-small);
+            font-size: var(--font-size-sm);
+            font-weight: 500;
+        }
+        
+        .exercise-stats {
+            margin: var(--space-md) 0;
+        }
+        
+        .stat {
+            display: flex;
+            align-items: baseline;
+            gap: var(--space-xs);
+            margin-bottom: var(--space-xs);
+        }
+        
+        .stat-value {
+            font-size: var(--font-size-lg);
+            font-weight: 600;
+        }
+        
+        .stat-label {
+            font-size: var(--font-size-sm);
+            color: var(--neutral-light);
+        }
+        
+        .progress-bar-mini-container {
+            height: 6px;
+            background-color: var(--background-light);
+            border-radius: var(--border-radius-small);
+            overflow: hidden;
+            margin-bottom: var(--space-md);
+        }
+        
+        .progress-bar-mini {
+            height: 100%;
+            border-radius: var(--border-radius-small);
+        }
+        
+        .activity-list {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-md);
+        }
+        
+        .activity-item {
+            display: flex;
+            gap: var(--space-md);
+            padding-bottom: var(--space-md);
+            border-bottom: 1px solid var(--background-light);
+        }
+        
+        .activity-item:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+        
+        .activity-icon {
+            width: 40px;
+            height: 40px;
+            background-color: var(--info-color-light);
+            color: var(--fluent-primary);
+            border-radius: var(--border-radius-circle);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: var(--font-size-xl);
+            flex-shrink: 0;
+        }
+        
+        .activity-content h4 {
+            margin-bottom: var(--space-xxs);
+        }
+        
+        .activity-content p {
+            margin-bottom: var(--space-xxs);
+            color: var(--neutral);
+        }
+        
+        .activity-time {
+            font-size: var(--font-size-sm);
+            color: var(--neutral-light);
+        }
+        
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: var(--space-lg);
+            margin-bottom: var(--space-xxl);
+        }
+        
+        .feature-card {
+            padding: var(--space-lg);
+            text-align: center;
+        }
+        
+        .feature-icon {
+            font-size: 2.5rem;
+            color: var(--fluent-primary);
+            margin-bottom: var(--space-md);
+        }
+        
+        .feature-card h3 {
+            margin-bottom: var(--space-sm);
+        }
+        
+        .footer {
+            background-color: var(--neutral-white);
+            padding: var(--space-xl) 0;
+            margin-top: var(--space-xxl);
+            border-top: 1px solid var(--background-light);
+        }
+        
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: var(--space-lg);
+        }
+        
+        .footer-logo p {
+            color: var(--neutral-light);
+        }
+        
+        .footer-links ul {
+            list-style: none;
+            display: flex;
+            gap: var(--space-lg);
+        }
+        
+        .footer-bottom {
+            padding-top: var(--space-md);
+            border-top: 1px solid var(--background-light);
+            text-align: center;
+            color: var(--neutral-light);
+            font-size: var(--font-size-sm);
+        }
+        
+        .phoneme-badges {
+            display: flex;
+            gap: var(--space-xs);
+            margin-top: var(--space-xs);
+        }
+        
+        .phoneme-badge {
+            background-color: var(--fluent-primary-light);
+            color: white;
+            padding: var(--space-xxs) var(--space-xs);
+            border-radius: var(--border-radius-small);
+            font-weight: 500;
+        }
+        
+        @media (max-width: 768px) {
+            .footer-content {
+                flex-direction: column;
+                gap: var(--space-lg);
+            }
+            
+            .footer-links ul {
+                flex-direction: column;
+                gap: var(--space-sm);
+            }
+        }
+    </style>
 </body>
 </html>           
 
